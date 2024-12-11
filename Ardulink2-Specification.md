@@ -134,6 +134,6 @@ This protocol enables communication between an Arduino device and a host system 
 
 ### Key Points
 
-- **`id` is optional** in all commands. 
-- **`id` is included in the response** only if the original command contains an `id`.
-- If no `id` is included in the command, the Arduino does not send an `id` in the response.
+- **`id` is optional** in all commands.
+- **If `id` is provided in the command**, the Arduino includes the same `id` in the response.
+- **If no `id` is included in the command**, the Arduino does not send any response at all.
