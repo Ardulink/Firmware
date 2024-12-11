@@ -88,10 +88,10 @@ This protocol enables communication between an Arduino device and a host system 
 
 ### 1. **Reply (rply)**
 - **Command**: `alp://rply/<status>?id=<id>`  
-- **Description**: The Arduino sends a response back indicating the success or failure of the operation. The response includes the same `id` from the original command (if it was provided).  
+- **Description**: The Arduino sends a response back indicating the success or failure of the operation. The response includes the same `id` from the original command (if it was provided). If no `id` was provided in the the original command there will be no reply. 
 - **Parameters**:
   - `status`: "ok" or "ko" indicating whether the command was successful or not.
-  - `id`: *(Optional)* The unique message identifier that was included in the original command (if provided). This `id` **must** be included in the response if the original command contained an `id`. If the command did not include an `id`, the response will not include an `id`.
+  - `id`: The unique message identifier that was included in the original command. 
 
 ### 2. **Pin Reading**
 - **Command**: `alp://<type>/<pin>/<value>`
