@@ -100,7 +100,6 @@ This protocol enables communication between an Arduino device and a host system 
   - `type`: The type of pin ("dred" for digital or "ared" for analog).
   - `pin`: The pin number that is being monitored.
   - `value`: The value of the pin (either 0/1 for digital or an analog value).
-  - `id`: *(Optional)* Unique message identifier. If the original command had an `id`, it will be included in the response.
 
 ---
 
