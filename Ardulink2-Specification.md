@@ -107,7 +107,7 @@ This protocol enables communication between an Arduino device and a host system 
 
 1. **Host to Arduino**: The host system sends a command to the Arduino.
 2. **Arduino Execution**: The Arduino processes the command and interacts with the hardware as necessary.
-3. **Arduino to Host**: The Arduino sends a response. If the original command contained an `id`, it will be included in the response. If no `id` was provided in the command, the Arduino will not send an `id` in the response.
+3. **Arduino to Host**: If the original command contained an `id` the Arduino sends a response with the requests' `id` same. If no `id` was provided in the command, the Arduino will not send a response for that command.
 
 ---
 
@@ -135,4 +135,4 @@ This protocol enables communication between an Arduino device and a host system 
 
 - **`id` is optional** in all commands.
 - **If `id` is provided in the command**, the Arduino includes the same `id` in the response.
-- **If no `id` is included in the command**, the Arduino does not send any response at all.
+- **If no `id` is included in the command**, the Arduino does not send a response for that command.
