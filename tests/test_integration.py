@@ -23,7 +23,7 @@ def docker_container():
         DOCKER_IMAGE,
         detach=True,
         auto_remove=True,
-        ports={"8080/tcp": 8080},
+        ports={"8080/tcp": None},  # Map container port to a random free port on the host
         volumes={
             os.path.abspath(os.path.join(os.getcwd(), "../ArdulinkProtocol")): {"bind": "/sketch", "mode": "ro"},
             "/dev/": {"bind": "/dev/", "mode": "rw"}
@@ -34,10 +34,12 @@ def docker_container():
         }
     )
 
-    # print("Sleeping for 300 seconds to allow for manual intervention...")
-    # time.sleep(300)
+    # Retrieve the dynamically assigned host port
+    container.reload()  # Ensure latest state of the container
+    host_port = container.attrs['NetworkSettings']['Ports']['8080/tcp'][0]['HostPort']
+    print(f"Docker container is running with WebSocket bound to host port {host_port}")
 
-    ws_url = "ws://localhost:8080"
+    ws_url = f"ws://localhost:{host_port}"
     retries = 0
     while retries < MAX_RETRIES:
         try:
@@ -53,16 +55,15 @@ def docker_container():
     if retries == MAX_RETRIES:
         pytest.fail(f"WebSocket connection to {ws_url} failed after {MAX_RETRIES} retries.")
 
-    yield container
+    yield container, host_port  # Return the container and host port
 
     print("Stopping Docker container...")
     container.stop()
     
-    # Wait a little to ensure the container is fully stopped before removal
-    time.sleep(2)
+    time.sleep(2)  # Allow some time for the container to fully stop
     
     try:
-        container.remove(force=True)  # Force removal to handle any ongoing removal conflict
+        container.remove(force=True)
         print("Docker container removed successfully.")
     except docker.errors.APIError as e:
         print(f"Error during container removal: {e}")
@@ -90,7 +91,8 @@ def test_wait_for_steady_message(docker_container):
 
 @pytest.mark.timeout(30)
 def test_can_switch_digital_pin(docker_container):
-    ws_url = "ws://localhost:8080"
+    container, host_port = docker_container
+    ws_url = f"ws://localhost:{host_port}"
     ws = websocket.create_connection(ws_url, timeout=10)
 
     pin_mode_message = {
