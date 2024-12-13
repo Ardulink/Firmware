@@ -23,6 +23,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest pytest-asyncio pytest-timeout docker websocket-client pyserial
 
+      - name: Grant permissions to access serial devices
+        run: |
+          sudo usermod -aG dialout $USER
+
       - name: Run pytest in the 'tests' folder
         run: |
           pytest tests --maxfail=1 --disable-warnings -q
