@@ -9,8 +9,10 @@ import os
 SERIAL_PORT = "/dev/ttyUSB0"
 SERIAL_BAUDRATE = 115200
 SERIAL_TIMEOUT = 5 
+WS_TIMEOUT=5
 MAX_RETRIES = 10
 RETRY_DELAY = 1
+
 
 DOCKER_IMAGE = "pfichtner/virtualavr"
 
@@ -43,7 +45,7 @@ def docker_container():
     retries = 0
     while retries < MAX_RETRIES:
         try:
-            ws = websocket.create_connection(ws_url, timeout=2)  # Timeout for WebSocket connection
+            ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
             print(f"Connected to WebSocket at {ws_url}")
             ws.close()
             break
@@ -69,80 +71,97 @@ def docker_container():
         print(f"Error during container removal: {e}")
 
 
+# Utility functions
+def send_serial_message(ser, message, expected_response=None, retries=MAX_RETRIES, delay=RETRY_DELAY):
+    """
+    Send a serial message and optionally wait for an expected response.
+    
+    If no expected response is provided, the function will return immediately after sending.
+    """
+    for attempt in range(retries):
+        ser.write(f"{message}\n".encode())
+        if expected_response is None:
+            print(f"Message sent: {message}")
+            return
+
+        response = ser.readline().decode().strip()
+        print(f"Raw serial response: {response}")
+        if response == expected_response:
+            print(f"Received expected response: {response}")
+            return response
+
+        time.sleep(delay)
+
+    if expected_response:
+        pytest.fail(f"Expected response not received. Last response: {response}")
+    return response
+
+
+def send_ws_message(ws, message, expected_response=None, retries=MAX_RETRIES, delay=RETRY_DELAY):
+    """
+    Send a WebSocket message and optionally wait for an expected response.
+
+    If no expected response is provided, the function returns immediately after sending.
+    """
+    ws.send(json.dumps(message))
+    print(f"Sent WebSocket message: {json.dumps(message)}")
+
+    if expected_response is None:
+        # Return immediately if no expected response is specified
+        print("No expected response specified, returning after sending.")
+        return
+
+    for attempt in range(retries):
+        try:
+            response = ws.recv()
+            print(f"Received WebSocket response: {response}")
+            response_json = json.loads(response)
+            if response_json == expected_response:
+                print(f"Received expected WebSocket response: {response}")
+                return response_json
+        except json.JSONDecodeError:
+            print("Non-JSON WebSocket response received, ignoring.")
+        except Exception as e:
+            print(f"Error receiving WebSocket response: {e}")
+        time.sleep(delay)
+
+    pytest.fail(f"Expected WebSocket response not received.")
+
 
 @pytest.mark.timeout(30)
 def test_wait_for_steady_message(docker_container):
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
-        retries = 0
-        while retries < MAX_RETRIES:
-            ser.write("alp://notn/0/0?id=0\n".encode())
-            serial_response = ser.readline().decode().strip()
-            print(f"Raw serial response: {serial_response}")
-
-            if serial_response == "alp://rply/ok?id=0":
-                print(f"Received expected response: {serial_response}")
-                return
-
-            retries += 1
-            time.sleep(RETRY_DELAY)
-        
-        pytest.fail(f"Expected response not received. Last response: {serial_response}")
+        send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
 
 
 @pytest.mark.timeout(30)
-def test_can_switch_digital_pin(docker_container):
+def test_can_switch_digital_pin_on_and_off(docker_container):
     container, host_port = docker_container
     ws_url = f"ws://localhost:{host_port}"
-    ws = websocket.create_connection(ws_url, timeout=10)
-
-    pin_mode_message = {
-        "type": "pinMode",
-        "pin": "D12",
-        "mode": "digital"
-    }
-
-    print(f"Sending WebSocket message: {json.dumps(pin_mode_message)}")
-    ws.send(json.dumps(pin_mode_message))
+    ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
+    send_ws_message(ws, {"type": "pinMode", "pin": "D12", "mode": "digital"})
 
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
-        retries = 0
-        while retries < MAX_RETRIES:
-            ser.write("alp://notn/0/0?id=0\n".encode())
-            serial_response = ser.readline().decode().strip()            
-            print(f"Raw serial response: {serial_response}")
+        send_serial_message(ser, "alp://ppsw/12/1")
+        send_ws_message(ws, {}, {"type": "pinState", "pin": "D12", "state": True})
 
-            if serial_response == "alp://rply/ok?id=0":
-                print(f"Received expected response: {serial_response}")
-                return
+        send_serial_message(ser, "alp://ppsw/12/0")
+        send_ws_message(ws, {}, {"type": "pinState", "pin": "D12", "state": False})
 
-            retries += 1
-            time.sleep(RETRY_DELAY)
+    ws.close()
 
-        serial_message = "alp://ppsw/D12/1\n"
-        print(f"Sending serial message: {serial_message}")
-        ser.write(serial_message.encode())
+@pytest.mark.timeout(30)
+def test_can_set_values_on_analog_pin(docker_container):
+    container, host_port = docker_container
+    ws_url = f"ws://localhost:{host_port}"
+    ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
+    send_ws_message(ws, {"type": "pinMode", "pin": "D9", "mode": "analog"})
 
-        retries = 0
-        expected_response = {
-            "type": "pinState",
-            "pin": "D12",
-            "state": True
-        }
+    with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
+        send_serial_message(ser, "alp://ppin/9/123")
+        send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 123})
 
-        while retries < MAX_RETRIES:
-            ws_response = ws.recv()
-            print(f"Received WebSocket response: {ws_response}")
-            try:
-                ws_response_json = json.loads(ws_response)
-                if ws_response_json == expected_response:
-                    print(f"Received expected WebSocket response: {ws_response}")
-                    return
-            except json.JSONDecodeError:
-                pass  # Ignore non-JSON responses
-            
-            retries += 1
-            time.sleep(RETRY_DELAY)
-
-        pytest.fail(f"Expected WebSocket response not received. Last response: {ws_response}")
+        send_serial_message(ser, "alp://ppin/9/0")
+        send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 0})
 
     ws.close()
