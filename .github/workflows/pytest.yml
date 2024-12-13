@@ -1,0 +1,40 @@
+name: Run Pytest
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-asyncio pytest-timeout docker websocket-client pyserial
+
+      - name: Grant permissions to access serial devices
+        run: |
+          sudo usermod -aG dialout $USER
+          newgrp dialout
+
+      - name: Debug serial port group ownership and user groups
+          # List the groups for the current user
+        run: |
+          groups
+
+      - name: Run pytest in the 'tests' folder
+        run: |
+          # pytest tests --maxfail=1 --disable-warnings -q
+          pytest tests
+

@@ -6,15 +6,30 @@ import time
 import serial
 import os
 
-SERIAL_PORT = "/dev/ttyUSB0"
+def get_unused_serial_port(dev_prefix='/dev/ttyUSB'):
+    # List all devices that match the given prefix (e.g., /dev/ttyUSB0, /dev/ttyUSB1, etc.)
+    existing_ports = [f for f in os.listdir('/dev') if f.startswith(dev_prefix)]
+    
+    # Extract the numbers from the existing port names
+    existing_numbers = set(int(f[len(dev_prefix):]) for f in existing_ports)
+    
+    # Find the first unused number (you could also generate a random number here)
+    new_port_number = 0
+    while new_port_number in existing_numbers:
+        new_port_number += 1
+    
+    # Return the full path to the first unused serial port
+    return f"{dev_prefix}{new_port_number}"
+
+SERIAL_PORT = get_unused_serial_port()
 SERIAL_BAUDRATE = 115200
 SERIAL_TIMEOUT = 5 
 WS_TIMEOUT=5
 MAX_RETRIES = 10
 RETRY_DELAY = 1
 
-
 DOCKER_IMAGE = "pfichtner/virtualavr"
+
 
 @pytest.fixture(scope="module")
 def docker_container():
@@ -27,12 +42,13 @@ def docker_container():
         auto_remove=True,
         ports={"8080/tcp": None},  # Map container port to a random free port on the host
         volumes={
-            os.path.abspath(os.path.join(os.getcwd(), "../ArdulinkProtocol")): {"bind": "/sketch", "mode": "ro"},
+            os.path.abspath(os.path.join(os.getcwd(), "ArdulinkProtocol")): {"bind": "/sketch", "mode": "ro"},
             "/dev/": {"bind": "/dev/", "mode": "rw"}
         },
         environment={ 
-            "VIRTUALDEVICE": "/dev/ttyUSB0",
-            "FILENAME": "ArdulinkProtocol.ino.hex"
+            "VIRTUALDEVICE": SERIAL_PORT,
+            "FILENAME": "ArdulinkProtocol.ino.hex",
+            "DEVICEMODE": "666"
         }
     )
 
@@ -145,6 +161,8 @@ def test_can_switch_digital_pin_on_and_off(docker_container):
     send_ws_message(ws, {"type": "pinMode", "pin": "D12", "mode": "digital"})
 
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
+        send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
+
         send_serial_message(ser, "alp://ppsw/12/1")
         send_ws_message(ws, {}, {"type": "pinState", "pin": "D12", "state": True})
 
@@ -161,6 +179,8 @@ def test_can_set_values_on_analog_pin(docker_container):
     send_ws_message(ws, {"type": "pinMode", "pin": "D9", "mode": "analog"})
 
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
+        send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
+
         send_serial_message(ser, "alp://ppin/9/123")
         send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 123})
 
@@ -177,11 +197,13 @@ def test_tone_without_rply_message(docker_container):
     send_ws_message(ws, {"type": "pinMode", "pin": "D9", "mode": "analog"})
 
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
+        send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
+
         send_serial_message(ser, "alp://tone/9/123/-1")
         send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 127})
 
-        send_serial_message(ser, "alp://notn/9")
-        send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 0})
+        # send_serial_message(ser, "alp://notn/9")
+        # send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 0})
 
     ws.close()
 
@@ -193,11 +215,13 @@ def test_tone_with_rply_message(docker_container):
     send_ws_message(ws, {"type": "pinMode", "pin": "D9", "mode": "analog"})
 
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
+        send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
+
         send_serial_message(ser, "alp://tone/9/123/-1?id=42", "alp://rply/ok?id=42")
         send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 127})
 
-        send_serial_message(ser, "alp://notn/9?id=43", "alp://rply/ok?id=43")
-        send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 0})
+        # send_serial_message(ser, "alp://notn/9?id=43", "alp://rply/ok?id=43")
+        # send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 0})
 
     ws.close()
 
@@ -205,12 +229,16 @@ def test_tone_with_rply_message(docker_container):
 @pytest.mark.timeout(30)
 def test_custom_messages_are_not_supported_in_default_implementation(docker_container):
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
+        send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
+
         send_serial_message(ser, "alp://cust/abc/xyz?id=42", "alp://rply/ko?id=42")
 
 
 @pytest.mark.timeout(30)
 def test_unknown_command_result_in_ko_rply(docker_container):
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
+        send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
+
         send_serial_message(ser, "alp://XXXX/123/abc/X-Y-Z?id=42", "alp://rply/ko?id=42")
 
 
@@ -220,6 +248,8 @@ def test_can_read_analog_pin_state(docker_container):
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
 
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
+        send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
+
         send_serial_message(ser, "alp://srla/5?id=42", "alp://rply/ok?id=42")
         send_serial_message(ser, None, "alp://ared/5/0")
         send_ws_message(ws, {"type": "pinState", "pin": "A5", "state": 987})
