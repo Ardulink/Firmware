@@ -28,6 +28,14 @@ jobs:
           sudo usermod -aG dialout $USER
           newgrp dialout
 
+      - name: Debug serial port group ownership and user groups
+        run: |
+          # Show the group ownership of the serial port file
+          ls -l /dev/ttyUSB0
+
+          # List the groups for the current user
+          groups
+
       - name: Run pytest in the 'tests' folder
         run: |
           pytest tests --maxfail=1 --disable-warnings -q
