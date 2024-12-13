@@ -27,7 +27,7 @@ def docker_container():
         auto_remove=True,
         ports={"8080/tcp": None},  # Map container port to a random free port on the host
         volumes={
-            os.path.abspath(os.path.join(os.getcwd(), "../ArdulinkProtocol")): {"bind": "/sketch", "mode": "ro"},
+            os.path.abspath(os.path.join(os.getcwd(), "ArdulinkProtocol")): {"bind": "/sketch", "mode": "ro"},
             "/dev/": {"bind": "/dev/", "mode": "rw"}
         },
         environment={ 
