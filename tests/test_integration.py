@@ -72,20 +72,24 @@ def docker_container():
 
 
 # Utility functions
-def send_serial_message(ser, message, expected_response=None, retries=MAX_RETRIES, delay=RETRY_DELAY):
+def send_serial_message(ser, message=None, expected_response=None, retries=MAX_RETRIES, delay=RETRY_DELAY):
     """
     Send a serial message and optionally wait for an expected response.
     
-    If no expected response is provided, the function will return immediately after sending.
+    If `message` is None, the function will only wait for a response without sending anything.
+    If `expected_response` is also None, the function will return the first response received.
     """
     for attempt in range(retries):
-        ser.write(f"{message}\n".encode())
-        if expected_response is None:
+        if message:
+            ser.write(f"{message}\n".encode())
             print(f"Message sent: {message}")
-            return
 
         response = ser.readline().decode().strip()
         print(f"Raw serial response: {response}")
+
+        if expected_response is None:
+            # If no expected response, return the first response received
+            return response
         if response == expected_response:
             print(f"Received expected response: {response}")
             return response
@@ -208,3 +212,33 @@ def test_custom_messages_are_not_supported_in_default_implementation(docker_cont
 def test_unknown_command_result_in_ko_rply(docker_container):
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
         send_serial_message(ser, "alp://XXXX/123/abc/X-Y-Z?id=42", "alp://rply/ko?id=42")
+
+
+@pytest.mark.timeout(30)
+def test_can_read_analog_pin_state(docker_container):
+    container, ws_url = docker_container
+    ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
+
+    with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
+        send_serial_message(ser, "alp://srla/5?id=42", "alp://rply/ok?id=42")
+        send_serial_message(ser, None, "alp://ared/5/0")
+        send_ws_message(ws, {"type": "pinState", "pin": "A5", "state": 987})
+        send_serial_message(ser, None, "alp://ared/5/987")
+        send_serial_message(ser, "alp://spla/5?id=43", "alp://rply/ok?id=43")
+
+    ws.close()
+
+
+@pytest.mark.timeout(30)
+def test_can_read_digital_pin_state(docker_container):
+    container, ws_url = docker_container
+    ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
+
+    with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
+        send_serial_message(ser, "alp://srld/12?id=42", "alp://rply/ok?id=42")
+        send_serial_message(ser, None, "alp://dred/12/0")
+        send_ws_message(ws, {"type": "pinState", "pin": "D12", "state": True})
+        send_serial_message(ser, None, "alp://dred/12/1")
+        send_serial_message(ser, "alp://spld/12?id=43", "alp://rply/ok?id=43")
+
+    ws.close()
