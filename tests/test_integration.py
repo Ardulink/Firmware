@@ -72,6 +72,23 @@ def docker_container():
     if retries == MAX_RETRIES:
         pytest.fail(f"WebSocket connection to {ws_url} failed after {MAX_RETRIES} retries.")
 
+    # Debug: Print the owner and group of the SERIAL_PORT
+    try:
+        # Get the file stats
+        port_stat = os.stat(SERIAL_PORT)
+        owner_uid = port_stat.st_uid
+        owner_gid = port_stat.st_gid
+
+        # Get the owner and group names
+        owner_name = os.getpwuid(owner_uid).pw_name
+        group_name = os.getgrgid(owner_gid).gr_name
+
+        # Print debug information
+        print(f"Debug: Serial Port {SERIAL_PORT} is owned by {owner_name}:{group_name}")
+
+    except Exception as e:
+        print(f"Error: Could not get information for {SERIAL_PORT}. Exception: {e}")
+
     yield container, ws_url
 
     print("Stopping Docker container...")
@@ -149,23 +166,6 @@ def send_ws_message(ws, message, expected_response=None, retries=MAX_RETRIES, de
 
 @pytest.mark.timeout(30)
 def test_wait_for_steady_message(docker_container):
-    # Debug: Print the owner and group of the SERIAL_PORT
-    try:
-        # Get the file stats
-        port_stat = os.stat(SERIAL_PORT)
-        owner_uid = port_stat.st_uid
-        owner_gid = port_stat.st_gid
-
-        # Get the owner and group names
-        owner_name = os.getpwuid(owner_uid).pw_name
-        group_name = os.getgrgid(owner_gid).gr_name
-
-        # Print debug information
-        print(f"Debug: Serial Port {SERIAL_PORT} is owned by {owner_name}:{group_name}")
-
-    except Exception as e:
-        print(f"Error: Could not get information for {SERIAL_PORT}. Exception: {e}")
-
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
         send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
 
