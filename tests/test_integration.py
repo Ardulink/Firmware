@@ -196,3 +196,15 @@ def test_tone_with_rply_message(docker_container):
         send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 0})
 
     ws.close()
+
+
+@pytest.mark.timeout(30)
+def test_custom_messages_are_not_supported_in_default_implementation(docker_container):
+    with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
+        send_serial_message(ser, "alp://cust/abc/xyz?id=42", "alp://rply/ko?id=42")
+
+
+@pytest.mark.timeout(30)
+def test_unknown_command_result_in_ko_rply(docker_container):
+    with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
+        send_serial_message(ser, "alp://XXXX/123/abc/X-Y-Z?id=42", "alp://rply/ko?id=42")
