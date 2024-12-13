@@ -30,6 +30,7 @@ jobs:
 
       - name: Debug serial port group ownership and user groups
           # List the groups for the current user
+        run: |
           groups
 
       - name: Run pytest in the 'tests' folder
