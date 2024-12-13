@@ -26,6 +26,7 @@ jobs:
       - name: Grant permissions to access serial devices
         run: |
           sudo usermod -aG dialout $USER
+          newgrp dialout
 
       - name: Run pytest in the 'tests' folder
         run: |
