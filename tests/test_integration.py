@@ -197,6 +197,8 @@ def test_tone_without_rply_message(docker_container):
         send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 127})
 
         send_serial_message(ser, "alp://notn/9")
+	# this test fails sometimes, trying to send the message again
+        send_serial_message(ser, "alp://notn/9")
         send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 0})
 
     ws.close()
