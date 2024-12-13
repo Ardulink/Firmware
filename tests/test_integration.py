@@ -57,7 +57,7 @@ def docker_container():
     if retries == MAX_RETRIES:
         pytest.fail(f"WebSocket connection to {ws_url} failed after {MAX_RETRIES} retries.")
 
-    yield container, host_port  # Return the container and host port
+    yield container, ws_url
 
     print("Stopping Docker container...")
     container.stop()
@@ -136,8 +136,7 @@ def test_wait_for_steady_message(docker_container):
 
 @pytest.mark.timeout(30)
 def test_can_switch_digital_pin_on_and_off(docker_container):
-    container, host_port = docker_container
-    ws_url = f"ws://localhost:{host_port}"
+    container, ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
     send_ws_message(ws, {"type": "pinMode", "pin": "D12", "mode": "digital"})
 
@@ -152,8 +151,7 @@ def test_can_switch_digital_pin_on_and_off(docker_container):
 
 @pytest.mark.timeout(30)
 def test_can_set_values_on_analog_pin(docker_container):
-    container, host_port = docker_container
-    ws_url = f"ws://localhost:{host_port}"
+    container, ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
     send_ws_message(ws, {"type": "pinMode", "pin": "D9", "mode": "analog"})
 
