@@ -6,15 +6,30 @@ import time
 import serial
 import os
 
-SERIAL_PORT = "/dev/ttyUSB42"
+def get_unused_serial_port(dev_prefix='/dev/ttyUSB'):
+    # List all devices that match the given prefix (e.g., /dev/ttyUSB0, /dev/ttyUSB1, etc.)
+    existing_ports = [f for f in os.listdir('/dev') if f.startswith(dev_prefix)]
+    
+    # Extract the numbers from the existing port names
+    existing_numbers = set(int(f[len(dev_prefix):]) for f in existing_ports)
+    
+    # Find the first unused number (you could also generate a random number here)
+    new_port_number = 0
+    while new_port_number in existing_numbers:
+        new_port_number += 1
+    
+    # Return the full path to the first unused serial port
+    return f"{dev_prefix}{new_port_number}"
+
+SERIAL_PORT = get_unused_serial_port()
 SERIAL_BAUDRATE = 115200
 SERIAL_TIMEOUT = 5 
 WS_TIMEOUT=5
 MAX_RETRIES = 10
 RETRY_DELAY = 1
 
-
 DOCKER_IMAGE = "pfichtner/virtualavr"
+
 
 @pytest.fixture(scope="module")
 def docker_container():
