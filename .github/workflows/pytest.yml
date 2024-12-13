@@ -29,10 +29,6 @@ jobs:
           newgrp dialout
 
       - name: Debug serial port group ownership and user groups
-        run: |
-          # Show the group ownership of the serial port file
-          ls -l /dev/ttyUSB0
-
           # List the groups for the current user
           groups
 
