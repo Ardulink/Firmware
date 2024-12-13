@@ -23,18 +23,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest pytest-asyncio pytest-timeout docker websocket-client pyserial
 
-      - name: Grant permissions to access serial devices
+      - name: Create dummy device so it has the right permissions
         run: |
-          sudo usermod -aG dialout $USER
-          newgrp dialout
-
-      - name: Debug serial port group ownership and user groups
-          # List the groups for the current user
-        run: |
-          groups
+          touch /tmp/ttyUSB0
 
       - name: Run pytest in the 'tests' folder
         run: |
-          # pytest tests --maxfail=1 --disable-warnings -q
-          pytest tests
+          pytest tests --maxfail=1 --disable-warnings -q
 
