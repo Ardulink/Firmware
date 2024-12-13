@@ -6,7 +6,7 @@ import time
 import serial
 import os
 
-SERIAL_PORT = "/dev/ttyUSB0"
+SERIAL_PORT = "/dev/ttyUSB42"
 SERIAL_BAUDRATE = 115200
 SERIAL_TIMEOUT = 5 
 WS_TIMEOUT=5
@@ -31,7 +31,7 @@ def docker_container():
             "/dev/": {"bind": "/dev/", "mode": "rw"}
         },
         environment={ 
-            "VIRTUALDEVICE": "/dev/ttyUSB0",
+            "VIRTUALDEVICE": SERIAL_PORT,
             "FILENAME": "ArdulinkProtocol.ino.hex"
         }
     )
