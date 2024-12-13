@@ -35,5 +35,6 @@ jobs:
 
       - name: Run pytest in the 'tests' folder
         run: |
-          pytest tests --maxfail=1 --disable-warnings -q
+          # pytest tests --maxfail=1 --disable-warnings -q
+          pytest tests
 
