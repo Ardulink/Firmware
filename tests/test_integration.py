@@ -265,6 +265,8 @@ def test_can_read_digital_pin_state(docker_container):
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
 
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
+        send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
+
         send_serial_message(ser, "alp://srld/12?id=42", "alp://rply/ok?id=42")
         send_serial_message(ser, None, "alp://dred/12/0")
         send_ws_message(ws, {"type": "pinState", "pin": "D12", "state": True})
