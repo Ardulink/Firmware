@@ -149,6 +149,7 @@ def test_can_switch_digital_pin_on_and_off(docker_container):
 
     ws.close()
 
+
 @pytest.mark.timeout(30)
 def test_can_set_values_on_analog_pin(docker_container):
     container, ws_url = docker_container
@@ -160,6 +161,38 @@ def test_can_set_values_on_analog_pin(docker_container):
         send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 123})
 
         send_serial_message(ser, "alp://ppin/9/0")
+        send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 0})
+
+    ws.close()
+
+
+@pytest.mark.timeout(30)
+def test_tone_without_rply_message(docker_container):
+    container, ws_url = docker_container
+    ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
+    send_ws_message(ws, {"type": "pinMode", "pin": "D9", "mode": "analog"})
+
+    with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
+        send_serial_message(ser, "alp://tone/9/123/-1")
+        send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 127})
+
+        send_serial_message(ser, "alp://notn/9")
+        send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 0})
+
+    ws.close()
+
+
+@pytest.mark.timeout(30)
+def test_tone_with_rply_message(docker_container):
+    container, ws_url = docker_container
+    ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
+    send_ws_message(ws, {"type": "pinMode", "pin": "D9", "mode": "analog"})
+
+    with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
+        send_serial_message(ser, "alp://tone/9/123/-1?id=42", "alp://rply/ok?id=42")
+        send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 127})
+
+        send_serial_message(ser, "alp://notn/9?id=43", "alp://rply/ok?id=43")
         send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 0})
 
     ws.close()
