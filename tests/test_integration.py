@@ -48,7 +48,7 @@ def docker_container():
         environment={ 
             "VIRTUALDEVICE": SERIAL_PORT,
             "FILENAME": "ArdulinkProtocol.ino.hex",
-            "DEVICEMODE": "666"
+            "DEVICEUSER": str(os.getuid())
         }
     )
 
