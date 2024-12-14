@@ -244,7 +244,7 @@ def test_unknown_command_result_in_ko_rply(docker_container):
         send_serial_message(ser, "alp://XXXX/123/abc/X-Y-Z?id=42", "alp://rply/ko?id=42")
 
 
-def test_can_read_analog_pin_state(docker_container):
+def test_can_read_analog_pin_state_initial_pin_state_0(docker_container):
     container, ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
 
@@ -260,7 +260,22 @@ def test_can_read_analog_pin_state(docker_container):
     ws.close()
 
 
-def test_can_read_digital_pin_state(docker_container):
+def test_can_read_analog_pin_state_initial_pin_state_987(docker_container):
+    container, ws_url = docker_container
+    ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
+
+    with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
+        wait_for_steady_state(ser)
+
+        send_ws_message(ws, {"type": "pinState", "pin": "A5", "state": 987})
+        send_serial_message(ser, "alp://srla/5?id=42", "alp://rply/ok?id=42")
+        wait_for_serial_message(ser, "alp://ared/5/987")
+        send_serial_message(ser, "alp://spla/5?id=43", "alp://rply/ok?id=43")
+
+    ws.close()
+
+
+def test_can_read_digital_pin_state_initial_pin_state_0(docker_container):
     container, ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
 
@@ -270,6 +285,21 @@ def test_can_read_digital_pin_state(docker_container):
         send_serial_message(ser, "alp://srld/12?id=42", "alp://rply/ok?id=42")
         wait_for_serial_message(ser, "alp://dred/12/0")
         send_ws_message(ws, {"type": "pinState", "pin": "D12", "state": True})
+        wait_for_serial_message(ser, "alp://dred/12/1")
+        send_serial_message(ser, "alp://spld/12?id=43", "alp://rply/ok?id=43")
+
+    ws.close()
+
+
+def test_can_read_digital_pin_state_initial_pin_state_1(docker_container):
+    container, ws_url = docker_container
+    ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
+
+    with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
+        wait_for_steady_state(ser)
+
+        send_ws_message(ws, {"type": "pinState", "pin": "D12", "state": True})
+        send_serial_message(ser, "alp://srld/12?id=42", "alp://rply/ok?id=42")
         wait_for_serial_message(ser, "alp://dred/12/1")
         send_serial_message(ser, "alp://spld/12?id=43", "alp://rply/ok?id=43")
 
