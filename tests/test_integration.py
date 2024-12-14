@@ -83,38 +83,26 @@ def docker_container():
         print(f"Unexpected error: {e}")
 
 
-# Utility functions
-import time
-import pytest
-
 def send_serial_message(ser, message=None, expected_response=None, timeout=SERIAL_TIMEOUT):
     """
     Send a serial message and optionally wait for an expected response.
-    
-    Parameters:
-        ser: The serial object for communication.
-        message: The message to send. If None, the function only waits for a response.
-        expected_response: The response to wait for. If None, returns the first response received.
-        timeout: The maximum time (in seconds) to wait for the expected response.
+    If no message is provided, this function will only handle waiting for a response.
+    """
+    if message:
+        ser.write(f"{message}\n".encode())
+        print(f"Sent serial message: {message}")
 
-    Returns:
-        The received response, or raises an error if the expected response is not received within the timeout.
+    if expected_response:
+        return wait_for_serial_message(ser, expected_response, timeout)
+
+
+def wait_for_serial_message(ser, expected_response, timeout=SERIAL_TIMEOUT):
+    """
+    Wait for an expected response on the serial connection.
     """
     start_time = time.time()  # Record the start time
 
-    # Ensure the serial timeout is finite
-    if ser.timeout is None:
-        ser.timeout = 1  # Default timeout if not set
-
     while time.time() - start_time < timeout:
-        if message:
-            ser.write(f"{message}\n".encode())
-            print(f"Sent serial message: {message}")
-
-        if expected_response is None:
-            print("No expected response specified, returning after sending.")
-            return
-
         response = ser.readline().decode().strip()  # Will block for `ser.timeout` seconds
         print(f"Received serial response: {response}")
 
@@ -122,34 +110,26 @@ def send_serial_message(ser, message=None, expected_response=None, timeout=SERIA
             print(f"Received expected serial response: {response}")
             return response
 
-    pytest.fail(f"Expected serial response not received within {timeout} seconds.")
+    pytest.fail(f"Expected serial response '{expected_response}' not received within {timeout} seconds.")
 
 
-import time
-import json
-import pytest
-
-def send_ws_message(ws, message, expected_response=None, timeout=WS_TIMEOUT):
+def send_ws_message(ws, message=None, expected_response=None, timeout=WS_TIMEOUT):
     """
     Send a WebSocket message and optionally wait for an expected response.
-
-    Parameters:
-        ws: The WebSocket connection object.
-        message: The message to send (will be JSON-encoded).
-        expected_response: The expected response (JSON-decoded). If None, the function returns immediately after sending.
-        timeout: The maximum time (in seconds) to wait for the expected response.
-
-    Returns:
-        The received response if it matches the expected response, or raises an error if the timeout is reached.
+    If no message is provided, this function will only handle waiting for a response.
     """
     if message:
         ws.send(json.dumps(message))
         print(f"Sent WebSocket message: {json.dumps(message)}")
 
-    if expected_response is None:
-        print("No expected response specified, returning after sending.")
-        return
+    if expected_response:
+        return wait_for_ws_message(ws, expected_response, timeout)
 
+
+def wait_for_ws_message(ws, expected_response, timeout=WS_TIMEOUT):
+    """
+    Wait for an expected response on the WebSocket connection.
+    """
     start_time = time.time()  # Record the start time
 
     while time.time() - start_time < timeout:
@@ -159,14 +139,14 @@ def send_ws_message(ws, message, expected_response=None, timeout=WS_TIMEOUT):
             response_json = json.loads(response)
 
             if response_json == expected_response:
-                print(f"Received expected WebSocket response: {response}")
+                print(f"Received expected WebSocket response: {response_json}")
                 return response_json
         except json.JSONDecodeError:
             print("Non-JSON WebSocket response received, ignoring.")
         except Exception as e:
             print(f"Error receiving WebSocket response: {e}")
 
-    pytest.fail(f"Expected WebSocket response not received within {timeout} seconds.")
+    pytest.fail(f"Expected WebSocket response '{expected_response}' not received within {timeout} seconds.")
 
 
 @pytest.mark.timeout(30)
@@ -185,7 +165,7 @@ def test_can_switch_digital_pin_on_and_off(docker_container):
         send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
 
         send_serial_message(ser, "alp://ppsw/12/1")
-        send_ws_message(ws, None, {"type": "pinState", "pin": "D12", "state": True})
+        wait_for_ws_message(ws, {"type": "pinState", "pin": "D12", "state": True})
 
         send_serial_message(ser, "alp://ppsw/12/0")
         send_ws_message(ws, None, {"type": "pinState", "pin": "D12", "state": False})
@@ -203,10 +183,10 @@ def test_can_set_values_on_analog_pin(docker_container):
         send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
 
         send_serial_message(ser, "alp://ppin/9/123")
-        send_ws_message(ws, None, {"type": "pinState", "pin": "D9", "state": 123})
+        wait_for_ws_message(ws, {"type": "pinState", "pin": "D9", "state": 123})
 
         send_serial_message(ser, "alp://ppin/9/0")
-        send_ws_message(ws, None, {"type": "pinState", "pin": "D9", "state": 0})
+        wait_for_ws_message(ws, {"type": "pinState", "pin": "D9", "state": 0})
 
     ws.close()
 
@@ -221,10 +201,10 @@ def test_tone_without_rply_message(docker_container):
         send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
 
         send_serial_message(ser, "alp://tone/9/123/-1")
-        send_ws_message(ws, None, {"type": "pinState", "pin": "D9", "state": 127})
+        wait_for_ws_message(ws, {"type": "pinState", "pin": "D9", "state": 127})
 
         send_serial_message(ser, "alp://notn/9")
-        send_ws_message(ws, None, {"type": "pinState", "pin": "D9", "state": 0})
+        wait_for_ws_message(ws, {"type": "pinState", "pin": "D9", "state": 0})
 
     ws.close()
 
@@ -239,10 +219,10 @@ def test_tone_with_rply_message(docker_container):
         send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
 
         send_serial_message(ser, "alp://tone/9/123/-1?id=42", "alp://rply/ok?id=42")
-        send_ws_message(ws, None, {"type": "pinState", "pin": "D9", "state": 127})
+        wait_for_ws_message(ws, {"type": "pinState", "pin": "D9", "state": 127})
 
         send_serial_message(ser, "alp://notn/9?id=43", "alp://rply/ok?id=43")
-        send_ws_message(ws, None, {"type": "pinState", "pin": "D9", "state": 0})
+        wait_for_ws_message(ws, {"type": "pinState", "pin": "D9", "state": 0})
 
     ws.close()
 
@@ -272,9 +252,9 @@ def test_can_read_analog_pin_state(docker_container):
         send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
 
         send_serial_message(ser, "alp://srla/5?id=42", "alp://rply/ok?id=42")
-        send_serial_message(ser, None, "alp://ared/5/0")
+        wait_for_serial_message(ser, "alp://ared/5/0")
         send_ws_message(ws, {"type": "pinState", "pin": "A5", "state": 987})
-        send_serial_message(ser, None, "alp://ared/5/987")
+        wait_for_serial_message(ser, "alp://ared/5/987")
         send_serial_message(ser, "alp://spla/5?id=43", "alp://rply/ok?id=43")
 
     ws.close()
@@ -289,9 +269,9 @@ def test_can_read_digital_pin_state(docker_container):
         send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
 
         send_serial_message(ser, "alp://srld/12?id=42", "alp://rply/ok?id=42")
-        send_serial_message(ser, None, "alp://dred/12/0")
+        wait_for_serial_message(ser, "alp://dred/12/0")
         send_ws_message(ws, {"type": "pinState", "pin": "D12", "state": True})
-        send_serial_message(ser, None, "alp://dred/12/1")
+        wait_for_serial_message(ser, "alp://dred/12/1")
         send_serial_message(ser, "alp://spld/12?id=43", "alp://rply/ok?id=43")
 
     ws.close()
