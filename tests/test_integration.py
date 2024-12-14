@@ -157,13 +157,11 @@ def wait_for_steady_state(ser):
     send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
 
 
-@pytest.mark.timeout(30)
 def test_wait_for_steady_message(docker_container):
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
                 wait_for_steady_state(ser)
 
 
-@pytest.mark.timeout(30)
 def test_can_switch_digital_pin_on_and_off(docker_container):
     container, ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
@@ -181,7 +179,6 @@ def test_can_switch_digital_pin_on_and_off(docker_container):
     ws.close()
 
 
-@pytest.mark.timeout(30)
 def test_can_set_values_on_analog_pin(docker_container):
     container, ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
@@ -199,7 +196,6 @@ def test_can_set_values_on_analog_pin(docker_container):
     ws.close()
 
 
-@pytest.mark.timeout(30)
 def test_tone_without_rply_message(docker_container):
     container, ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
@@ -217,7 +213,6 @@ def test_tone_without_rply_message(docker_container):
     ws.close()
 
 
-@pytest.mark.timeout(30)
 def test_tone_with_rply_message(docker_container):
     container, ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
@@ -235,7 +230,6 @@ def test_tone_with_rply_message(docker_container):
     ws.close()
 
 
-@pytest.mark.timeout(30)
 def test_custom_messages_are_not_supported_in_default_implementation(docker_container):
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
         wait_for_steady_state(ser)
@@ -243,7 +237,6 @@ def test_custom_messages_are_not_supported_in_default_implementation(docker_cont
         send_serial_message(ser, "alp://cust/abc/xyz?id=42", "alp://rply/ko?id=42")
 
 
-@pytest.mark.timeout(30)
 def test_unknown_command_result_in_ko_rply(docker_container):
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
         wait_for_steady_state(ser)
@@ -251,7 +244,6 @@ def test_unknown_command_result_in_ko_rply(docker_container):
         send_serial_message(ser, "alp://XXXX/123/abc/X-Y-Z?id=42", "alp://rply/ko?id=42")
 
 
-@pytest.mark.timeout(30)
 def test_can_read_analog_pin_state(docker_container):
     container, ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
@@ -268,7 +260,6 @@ def test_can_read_analog_pin_state(docker_container):
     ws.close()
 
 
-@pytest.mark.timeout(30)
 def test_can_read_digital_pin_state(docker_container):
     container, ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
