@@ -23,16 +23,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest pytest-asyncio pytest-timeout docker websocket-client pyserial
 
-      - name: Grant permissions to access serial devices
-        run: |
-          sudo usermod -aG dialout $USER
-          newgrp dialout
-
-      - name: Debug serial port group ownership and user groups
-          # List the groups for the current user
-        run: |
-          groups
-
       - name: Run pytest in the 'tests' folder
         run: |
           pytest tests -v --junit-xml=test-results/pytest.xml
