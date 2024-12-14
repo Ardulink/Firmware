@@ -73,16 +73,14 @@ def docker_container():
 
     yield container, ws_url
 
-    print("Stopping Docker container...")
-    container.stop()
-    
-    time.sleep(2)  # Allow some time for the container to fully stop
-    
+    print("Stopping and removing Docker container...")
     try:
         container.remove(force=True)
-        print("Docker container removed successfully.")
+        print("Docker container stopped and removed successfully.")
     except docker.errors.APIError as e:
-        print(f"Error during container removal: {e}")
+        print(f"Error during container stop/removal: {e}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
 
 
 # Utility functions
