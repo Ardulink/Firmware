@@ -228,8 +228,8 @@ def test_tone_without_rply_message(docker_container):
         send_serial_message(ser, "alp://tone/9/123/-1")
         send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 127})
 
-        # send_serial_message(ser, "alp://notn/9")
-        # send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 0})
+        send_serial_message(ser, "alp://notn/9")
+        send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 0})
 
     ws.close()
 
@@ -246,8 +246,8 @@ def test_tone_with_rply_message(docker_container):
         send_serial_message(ser, "alp://tone/9/123/-1?id=42", "alp://rply/ok?id=42")
         send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 127})
 
-        # send_serial_message(ser, "alp://notn/9?id=43", "alp://rply/ok?id=43")
-        # send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 0})
+        send_serial_message(ser, "alp://notn/9?id=43", "alp://rply/ok?id=43")
+        send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 0})
 
     ws.close()
 
