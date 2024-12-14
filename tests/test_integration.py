@@ -111,23 +111,20 @@ def send_serial_message(ser, message=None, expected_response=None, timeout=SERIA
     while time.time() - start_time < timeout:
         if message:
             ser.write(f"{message}\n".encode())
-            print(f"Message sent: {message}")
+            print(f"Sent serial message: {message}")
 
         if expected_response is None:
             print("No expected response specified, returning after sending.")
             return
 
         response = ser.readline().decode().strip()  # Will block for `ser.timeout` seconds
-        print(f"Serial response: {response}")
+        print(f"Received serial response: {response}")
 
         if response == expected_response:
-            print(f"Received expected response: {response}")
+            print(f"Received expected serial response: {response}")
             return response
 
-    # If we exit the loop, the timeout has been reached
-    if expected_response:
-        pytest.fail(f"Expected response not received within {timeout} seconds. Last response: {response}")
-    return response
+    pytest.fail(f"Expected serial response not received within {timeout} seconds.")
 
 
 import time
@@ -147,8 +144,9 @@ def send_ws_message(ws, message, expected_response=None, timeout=WS_TIMEOUT):
     Returns:
         The received response if it matches the expected response, or raises an error if the timeout is reached.
     """
-    ws.send(json.dumps(message))
-    print(f"Sent WebSocket message: {json.dumps(message)}")
+    if message:
+        ws.send(json.dumps(message))
+        print(f"Sent WebSocket message: {json.dumps(message)}")
 
     if expected_response is None:
         print("No expected response specified, returning after sending.")
@@ -170,7 +168,6 @@ def send_ws_message(ws, message, expected_response=None, timeout=WS_TIMEOUT):
         except Exception as e:
             print(f"Error receiving WebSocket response: {e}")
 
-    # If we exit the loop, the timeout has been reached
     pytest.fail(f"Expected WebSocket response not received within {timeout} seconds.")
 
 
@@ -190,10 +187,10 @@ def test_can_switch_digital_pin_on_and_off(docker_container):
         send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
 
         send_serial_message(ser, "alp://ppsw/12/1")
-        send_ws_message(ws, {}, {"type": "pinState", "pin": "D12", "state": True})
+        send_ws_message(ws, None, {"type": "pinState", "pin": "D12", "state": True})
 
         send_serial_message(ser, "alp://ppsw/12/0")
-        send_ws_message(ws, {}, {"type": "pinState", "pin": "D12", "state": False})
+        send_ws_message(ws, None, {"type": "pinState", "pin": "D12", "state": False})
 
     ws.close()
 
@@ -208,10 +205,10 @@ def test_can_set_values_on_analog_pin(docker_container):
         send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
 
         send_serial_message(ser, "alp://ppin/9/123")
-        send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 123})
+        send_ws_message(ws, None, {"type": "pinState", "pin": "D9", "state": 123})
 
         send_serial_message(ser, "alp://ppin/9/0")
-        send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 0})
+        send_ws_message(ws, None, {"type": "pinState", "pin": "D9", "state": 0})
 
     ws.close()
 
@@ -226,10 +223,10 @@ def test_tone_without_rply_message(docker_container):
         send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
 
         send_serial_message(ser, "alp://tone/9/123/-1")
-        send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 127})
+        send_ws_message(ws, None, {"type": "pinState", "pin": "D9", "state": 127})
 
         send_serial_message(ser, "alp://notn/9")
-        send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 0})
+        send_ws_message(ws, None, {"type": "pinState", "pin": "D9", "state": 0})
 
     ws.close()
 
@@ -244,10 +241,10 @@ def test_tone_with_rply_message(docker_container):
         send_serial_message(ser, "alp://notn/0/0?id=0", "alp://rply/ok?id=0")
 
         send_serial_message(ser, "alp://tone/9/123/-1?id=42", "alp://rply/ok?id=42")
-        send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 127})
+        send_ws_message(ws, None, {"type": "pinState", "pin": "D9", "state": 127})
 
         send_serial_message(ser, "alp://notn/9?id=43", "alp://rply/ok?id=43")
-        send_ws_message(ws, {}, {"type": "pinState", "pin": "D9", "state": 0})
+        send_ws_message(ws, None, {"type": "pinState", "pin": "D9", "state": 0})
 
     ws.close()
 
