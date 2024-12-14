@@ -29,7 +29,7 @@ WS_TIMEOUT=20
 DOCKER_IMAGE = "pfichtner/virtualavr"
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def docker_container():
     client = docker.from_env()
 
