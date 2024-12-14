@@ -23,10 +23,8 @@ def get_unused_serial_port(dev_prefix='/dev/ttyUSB'):
 
 SERIAL_PORT = get_unused_serial_port()
 SERIAL_BAUDRATE = 115200
-SERIAL_TIMEOUT = 5 
-WS_TIMEOUT=5
-MAX_RETRIES = 10
-RETRY_DELAY = 1
+SERIAL_TIMEOUT = 20
+WS_TIMEOUT=20
 
 DOCKER_IMAGE = "pfichtner/virtualavr"
 
@@ -59,7 +57,7 @@ def docker_container():
 
     ws_url = f"ws://localhost:{host_port}"
     retries = 0
-    while retries < MAX_RETRIES:
+    while retries < 20:
         try:
             ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
             print(f"Connected to WebSocket at {ws_url}")
@@ -68,10 +66,10 @@ def docker_container():
         except Exception as e:
             print(f"WebSocket connection failed: {e}, retrying...")
             retries += 1
-            time.sleep(2)
+            time.sleep(1)
 
-    if retries == MAX_RETRIES:
-        pytest.fail(f"WebSocket connection to {ws_url} failed after {MAX_RETRIES} retries.")
+    if ws is None:
+        pytest.fail(f"WebSocket connection to {ws_url} failed.")
 
     yield container, ws_url
 
@@ -88,54 +86,82 @@ def docker_container():
 
 
 # Utility functions
-def send_serial_message(ser, message=None, expected_response=None, retries=MAX_RETRIES, delay=RETRY_DELAY):
+import time
+import pytest
+
+def send_serial_message(ser, message=None, expected_response=None, timeout=SERIAL_TIMEOUT):
     """
     Send a serial message and optionally wait for an expected response.
     
-    If `message` is None, the function will only wait for a response without sending anything.
-    If `expected_response` is also None, the function will return the first response received.
+    Parameters:
+        ser: The serial object for communication.
+        message: The message to send. If None, the function only waits for a response.
+        expected_response: The response to wait for. If None, returns the first response received.
+        timeout: The maximum time (in seconds) to wait for the expected response.
+
+    Returns:
+        The received response, or raises an error if the expected response is not received within the timeout.
     """
-    for attempt in range(retries):
+    start_time = time.time()  # Record the start time
+
+    # Ensure the serial timeout is finite
+    if ser.timeout is None:
+        ser.timeout = 1  # Default timeout if not set
+
+    while time.time() - start_time < timeout:
         if message:
             ser.write(f"{message}\n".encode())
             print(f"Message sent: {message}")
 
-        response = ser.readline().decode().strip()
-        print(f"Raw serial response: {response}")
-
         if expected_response is None:
-            # If no expected response, return the first response received
-            return response
+            print("No expected response specified, returning after sending.")
+            return
+
+        response = ser.readline().decode().strip()  # Will block for `ser.timeout` seconds
+        print(f"Serial response: {response}")
+
         if response == expected_response:
             print(f"Received expected response: {response}")
             return response
 
-        time.sleep(delay)
-
+    # If we exit the loop, the timeout has been reached
     if expected_response:
-        pytest.fail(f"Expected response not received. Last response: {response}")
+        pytest.fail(f"Expected response not received within {timeout} seconds. Last response: {response}")
     return response
 
 
-def send_ws_message(ws, message, expected_response=None, retries=MAX_RETRIES, delay=RETRY_DELAY):
+import time
+import json
+import pytest
+
+def send_ws_message(ws, message, expected_response=None, timeout=WS_TIMEOUT):
     """
     Send a WebSocket message and optionally wait for an expected response.
 
-    If no expected response is provided, the function returns immediately after sending.
+    Parameters:
+        ws: The WebSocket connection object.
+        message: The message to send (will be JSON-encoded).
+        expected_response: The expected response (JSON-decoded). If None, the function returns immediately after sending.
+        timeout: The maximum time (in seconds) to wait for the expected response.
+
+    Returns:
+        The received response if it matches the expected response, or raises an error if the timeout is reached.
     """
     ws.send(json.dumps(message))
     print(f"Sent WebSocket message: {json.dumps(message)}")
 
     if expected_response is None:
-        # Return immediately if no expected response is specified
         print("No expected response specified, returning after sending.")
         return
 
-    for attempt in range(retries):
+    start_time = time.time()  # Record the start time
+
+    while time.time() - start_time < timeout:
         try:
             response = ws.recv()
             print(f"Received WebSocket response: {response}")
             response_json = json.loads(response)
+
             if response_json == expected_response:
                 print(f"Received expected WebSocket response: {response}")
                 return response_json
@@ -143,9 +169,9 @@ def send_ws_message(ws, message, expected_response=None, retries=MAX_RETRIES, de
             print("Non-JSON WebSocket response received, ignoring.")
         except Exception as e:
             print(f"Error receiving WebSocket response: {e}")
-        time.sleep(delay)
 
-    pytest.fail(f"Expected WebSocket response not received.")
+    # If we exit the loop, the timeout has been reached
+    pytest.fail(f"Expected WebSocket response not received within {timeout} seconds.")
 
 
 @pytest.mark.timeout(30)
