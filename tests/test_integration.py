@@ -69,7 +69,7 @@ def docker_container():
     if ws is None:
         pytest.fail(f"WebSocket connection to {ws_url} failed.")
 
-    yield container, ws_url
+    yield ws_url
 
     print("Stopping and removing Docker container...")
     try:
@@ -127,7 +127,7 @@ def wait_for_ws_message(ws, expected_response, timeout=WS_TIMEOUT):
 
 def set_pin_mode(ws, pin, mode):
     """
-    Sets the mode of a pin via WebSocket.
+    Sets the (listening) mode of a pin via WebSocket.
     """
     send_ws_message(ws, {"type": "pinMode", "pin": pin, "mode": mode})
 
@@ -158,7 +158,7 @@ def test_wait_for_steady_message(docker_container):
 
 
 def test_can_switch_digital_pin_on_and_off(docker_container):
-    container, ws_url = docker_container
+    ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
     set_pin_mode(ws, "D12", "digital")
 
@@ -175,7 +175,7 @@ def test_can_switch_digital_pin_on_and_off(docker_container):
 
 
 def test_can_set_values_on_analog_pin(docker_container):
-    container, ws_url = docker_container
+    ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
     set_pin_mode(ws, "D9", "analog")
 
@@ -192,7 +192,7 @@ def test_can_set_values_on_analog_pin(docker_container):
 
 
 def test_tone_without_rply_message(docker_container):
-    container, ws_url = docker_container
+    ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
     set_pin_mode(ws, "D9", "analog")
 
@@ -209,7 +209,7 @@ def test_tone_without_rply_message(docker_container):
 
 
 def test_tone_with_rply_message(docker_container):
-    container, ws_url = docker_container
+    ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
     set_pin_mode(ws, "D9", "analog")
 
@@ -245,7 +245,7 @@ def test_unknown_command_result_in_ko_rply(docker_container):
 
 
 def test_can_read_analog_pin_state_initial_pin_state_0(docker_container):
-    container, ws_url = docker_container
+    ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
 
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
@@ -263,7 +263,7 @@ def test_can_read_analog_pin_state_initial_pin_state_0(docker_container):
 
 
 def test_can_read_analog_pin_state_initial_pin_state_987(docker_container):
-    container, ws_url = docker_container
+    ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
 
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
@@ -280,7 +280,7 @@ def test_can_read_analog_pin_state_initial_pin_state_987(docker_container):
 
 
 def test_can_read_digital_pin_state_initial_pin_state_0(docker_container):
-    container, ws_url = docker_container
+    ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
 
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
@@ -298,7 +298,7 @@ def test_can_read_digital_pin_state_initial_pin_state_0(docker_container):
 
 
 def test_can_read_digital_pin_state_initial_pin_state_1(docker_container):
-    container, ws_url = docker_container
+    ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
 
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
