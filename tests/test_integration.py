@@ -26,8 +26,6 @@ SERIAL_BAUDRATE = 115200
 SERIAL_TIMEOUT = 20
 WS_TIMEOUT=20
 
-DOCKER_IMAGE = "pfichtner/virtualavr"
-
 
 @pytest.fixture
 def docker_container():
@@ -35,7 +33,7 @@ def docker_container():
 
     print("Starting Docker container...")
     container = client.containers.run(
-        DOCKER_IMAGE,
+        "pfichtner/virtualavr",
         detach=True,
         auto_remove=True,
         ports={"8080/tcp": None},  # Map container port to a random free port on the host
@@ -45,7 +43,7 @@ def docker_container():
         },
         environment={ 
             "VIRTUALDEVICE": SERIAL_PORT,
-            "FILENAME": "ArdulinkProtocol.ino.hex",
+            "FILENAME": "ArdulinkProtocol.ino",
             "DEVICEUSER": str(os.getuid())
         }
     )
