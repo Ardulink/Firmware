@@ -125,6 +125,24 @@ def wait_for_ws_message(ws, expected_response, timeout=WS_TIMEOUT):
     pytest.fail(f"Expected WebSocket response '{expected_response}' not received within {timeout} seconds.")
 
 
+def set_pin_mode(ws, pin, mode):
+    """
+    Sets the mode of a pin via WebSocket.
+    """
+    send_ws_message(ws, {"type": "pinMode", "pin": pin, "mode": mode})
+
+
+def pin_state(pin, state):
+    return {"type": "pinState", "pin": pin, "state": state}
+
+
+def set_pin_state(ws, pin, state):
+    """
+    Sets the state of a pin via WebSocket.
+    """
+    send_ws_message(ws, pin_state(pin, state))
+
+
 def wait_for_steady_state(ser):
     """
     Ensure the serial connection is in a steady state by sending a specific notification
@@ -142,16 +160,16 @@ def test_wait_for_steady_message(docker_container):
 def test_can_switch_digital_pin_on_and_off(docker_container):
     container, ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
-    send_ws_message(ws, {"type": "pinMode", "pin": "D12", "mode": "digital"})
+    set_pin_mode(ws, "D12", "digital")
 
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
         wait_for_steady_state(ser)
 
         send_serial_message(ser, "alp://ppsw/12/1")
-        wait_for_ws_message(ws, {"type": "pinState", "pin": "D12", "state": True})
+        wait_for_ws_message(ws, pin_state("D12", True))
 
         send_serial_message(ser, "alp://ppsw/12/0")
-        wait_for_ws_message(ws, {"type": "pinState", "pin": "D12", "state": False})
+        wait_for_ws_message(ws, pin_state("D12", False))
 
     ws.close()
 
@@ -159,16 +177,16 @@ def test_can_switch_digital_pin_on_and_off(docker_container):
 def test_can_set_values_on_analog_pin(docker_container):
     container, ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
-    send_ws_message(ws, {"type": "pinMode", "pin": "D9", "mode": "analog"})
+    set_pin_mode(ws, "D9", "analog")
 
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
         wait_for_steady_state(ser)
 
         send_serial_message(ser, "alp://ppin/9/123")
-        wait_for_ws_message(ws, {"type": "pinState", "pin": "D9", "state": 123})
+        wait_for_ws_message(ws, pin_state("D9", 123))
 
         send_serial_message(ser, "alp://ppin/9/0")
-        wait_for_ws_message(ws, {"type": "pinState", "pin": "D9", "state": 0})
+        wait_for_ws_message(ws, pin_state("D9", 0))
 
     ws.close()
 
@@ -176,16 +194,16 @@ def test_can_set_values_on_analog_pin(docker_container):
 def test_tone_without_rply_message(docker_container):
     container, ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
-    send_ws_message(ws, {"type": "pinMode", "pin": "D9", "mode": "analog"})
+    set_pin_mode(ws, "D9", "analog")
 
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
         wait_for_steady_state(ser)
 
         send_serial_message(ser, "alp://tone/9/123/-1")
-        wait_for_ws_message(ws, {"type": "pinState", "pin": "D9", "state": 127})
+        wait_for_ws_message(ws, pin_state("D9", 127))
 
         send_serial_message(ser, "alp://notn/9")
-        wait_for_ws_message(ws, {"type": "pinState", "pin": "D9", "state": 0})
+        wait_for_ws_message(ws, pin_state("D9", 0))
 
     ws.close()
 
@@ -193,19 +211,19 @@ def test_tone_without_rply_message(docker_container):
 def test_tone_with_rply_message(docker_container):
     container, ws_url = docker_container
     ws = websocket.create_connection(ws_url, timeout=WS_TIMEOUT)
-    send_ws_message(ws, {"type": "pinMode", "pin": "D9", "mode": "analog"})
+    set_pin_mode(ws, "D9", "analog")
 
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
         wait_for_steady_state(ser)
 
         send_serial_message(ser, "alp://tone/9/123/-1?id=42")
         wait_for_serial_message(ser, "alp://rply/ok?id=42")
-        wait_for_ws_message(ws, {"type": "pinState", "pin": "D9", "state": 127})
+        wait_for_ws_message(ws, pin_state("D9", 127))
 
         send_serial_message(ser, "alp://notn/9?id=43")
         wait_for_serial_message(ser, "alp://rply/ok?id=43")
 
-        wait_for_ws_message(ws, {"type": "pinState", "pin": "D9", "state": 0})
+        wait_for_ws_message(ws, pin_state("D9", 0))
 
     ws.close()
 
@@ -236,7 +254,7 @@ def test_can_read_analog_pin_state_initial_pin_state_0(docker_container):
         send_serial_message(ser, "alp://srla/5?id=42")
         wait_for_serial_message(ser, "alp://rply/ok?id=42")
         wait_for_serial_message(ser, "alp://ared/5/0")
-        send_ws_message(ws, {"type": "pinState", "pin": "A5", "state": 987})
+        set_pin_state(ws, "A5", 987)
         wait_for_serial_message(ser, "alp://ared/5/987")
         send_serial_message(ser, "alp://spla/5?id=43")
         wait_for_serial_message(ser, "alp://rply/ok?id=43")
@@ -251,7 +269,7 @@ def test_can_read_analog_pin_state_initial_pin_state_987(docker_container):
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
         wait_for_steady_state(ser)
 
-        send_ws_message(ws, {"type": "pinState", "pin": "A5", "state": 987})
+        set_pin_state(ws, "A5", 987)
         send_serial_message(ser, "alp://srla/5?id=42")
         wait_for_serial_message(ser, "alp://rply/ok?id=42")
         wait_for_serial_message(ser, "alp://ared/5/987")
@@ -271,7 +289,7 @@ def test_can_read_digital_pin_state_initial_pin_state_0(docker_container):
         send_serial_message(ser, "alp://srld/12?id=42")
         wait_for_serial_message(ser, "alp://rply/ok?id=42")
         wait_for_serial_message(ser, "alp://dred/12/0")
-        send_ws_message(ws, {"type": "pinState", "pin": "D12", "state": True})
+        set_pin_state(ws, "D12", True)
         wait_for_serial_message(ser, "alp://dred/12/1")
         send_serial_message(ser, "alp://spld/12?id=43")
         wait_for_serial_message(ser, "alp://rply/ok?id=43")
@@ -286,7 +304,7 @@ def test_can_read_digital_pin_state_initial_pin_state_1(docker_container):
     with serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=SERIAL_TIMEOUT) as ser:
         wait_for_steady_state(ser)
 
-        send_ws_message(ws, {"type": "pinState", "pin": "D12", "state": True})
+        set_pin_state(ws, "D12", True)
         send_serial_message(ser, "alp://srld/12?id=42")
         wait_for_serial_message(ser, "alp://rply/ok?id=42")
         wait_for_serial_message(ser, "alp://dred/12/1")
