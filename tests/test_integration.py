@@ -8,6 +8,7 @@ import json
 import time
 import serial
 import os
+import uuid
 
 def get_unused_serial_port(dev_prefix='/dev/ttyUSB'):
     # List all devices that match the given prefix (e.g., /dev/ttyUSB0, /dev/ttyUSB1, etc.)
@@ -156,8 +157,11 @@ def wait_for_serial_message(ser, expected_response, timeout=SERIAL_TIMEOUT):
 
 
 def send_ws_message(listener, message, timeout=WS_TIMEOUT):
+    reply_id = str(uuid.uuid4())
+    message["replyId"] = reply_id
     listener.ws.send(json.dumps(message))
     print(f"Sent WebSocket message: {json.dumps(message)}")
+    return reply_id
 
 
 def wait_for_ws_message(listener, pin, expected_state, timeout=WS_TIMEOUT):
@@ -191,22 +195,32 @@ def wait_for_ws_message(listener, pin, expected_state, timeout=WS_TIMEOUT):
     pytest.fail(f"No message for pin {pin} with the expected state {expected_state} received within {timeout} seconds.")
 
 
+def wait_for_reply(listener, reply_id, timeout=20):
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        messages = listener.get_all_messages()
+        for msg in messages:
+            if msg.get("replyId") == reply_id and msg.get("executed"):
+                print(f"Received reply for replyId {reply_id}")
+                return
+        time.sleep(0.1)
+    raise AssertionError(f"Reply for replyId {reply_id} not received within {timeout} seconds.")
+
+
 def set_pin_mode(ws, pin, mode):
     """
     Sets the (listening) mode of a pin via WebSocket.
     """
-    send_ws_message(ws, {"type": "pinMode", "pin": pin, "mode": mode})
-
-
-def pin_state(pin, state):
-    return {"type": "pinState", "pin": pin, "state": state}
+    reply_id = send_ws_message(ws, {"type": "pinMode", "pin": pin, "mode": mode})
+    wait_for_reply(ws, reply_id)
 
 
 def set_pin_state(ws, pin, state):
     """
     Sets the state of a pin via WebSocket.
     """
-    send_ws_message(ws, pin_state(pin, state))
+    reply_id = send_ws_message(ws, {"type": "pinState", "pin": pin, "state": state})
+    wait_for_reply(ws, reply_id)
 
 
 def wait_for_steady_state(ser):
