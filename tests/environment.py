@@ -39,7 +39,7 @@ def wait_for_serial_message(ser, expected_response, timeout=SERIAL_TIMEOUT):
     raise RuntimeError(f"Expected serial response '{expected_response}' not received within {timeout} seconds.")
 
 # Hook functions for Behave
-def before_all(context):
+def before_scenario(context, scenario):
     logger.info("Setting up test environment...")
 
     # Start Docker container
@@ -115,7 +115,7 @@ def before_all(context):
     except serial.SerialException as e:
         raise RuntimeError(f"Failed to open serial port {serial_port}: {e}")
 
-def after_all(context):
+def after_scenario(context, scenario):
     logger.info("Cleaning up test environment...")
 
     # Stop the WebSocket listener if it was started
