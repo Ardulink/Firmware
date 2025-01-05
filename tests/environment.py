@@ -80,7 +80,7 @@ def before_scenario(context, scenario):
         raise RuntimeError("Failed to retrieve the host port for the WebSocket connection.")
     host_port = ports[0]['HostPort']
     ws_url = f"ws://localhost:{host_port}"
-    logger.info(f"WebSocket URL: {context.ws_url}")
+    logger.info(f"WebSocket URL: {ws_url}")
 
     # Start the WebSocket listener with retries
     context.listener = WebSocketListener(ws_url, max_retries=20, retry_interval=1)
