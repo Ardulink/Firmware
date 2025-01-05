@@ -25,7 +25,7 @@ jobs:
 
       - name: Run pytest in the 'tests' folder
         env:
-          SKETCH_FILE=ArdulinkProtocol/ArdulinkProtocol.ino
+          SKETCH_FILE: ArdulinkProtocol/ArdulinkProtocol.ino
         run: |
           behave tests
 
