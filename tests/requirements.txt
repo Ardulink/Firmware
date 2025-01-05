@@ -5,4 +5,6 @@ docker
 websocket-client
 pyserial
 behave
+behave-html-pretty-formatter
+
 

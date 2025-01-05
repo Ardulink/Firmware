@@ -28,7 +28,7 @@ jobs:
         env:
           SKETCH_FILE: ../ArdulinkProtocol/ArdulinkProtocol.ino
         run: |
-          behave
+          behave -f html-pretty -o test-results/behave-report.html
 
       - name: Test Report
         uses: dorny/test-reporter@31a54ee7ebcacc03a09ea97a7e5465a47b84aea5 # v1
