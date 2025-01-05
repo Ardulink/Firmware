@@ -23,7 +23,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r tests/requirements.txt
 
-      - name: Run pytest in the 'tests' folder
+      - name: Run behave in the 'tests' folder
         env:
           SKETCH_FILE: ArdulinkProtocol/ArdulinkProtocol.ino
         run: |
