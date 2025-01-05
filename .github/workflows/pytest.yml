@@ -35,6 +35,6 @@ jobs:
         if: (success() || failure()) && github.event_name != 'pull_request' && github.actor != 'dependabot[bot]'  # run this step even if previous step failed
         with:
           name: Tests Report
-          path: "test-results/*.xml"
+          path: "tests/test-results/*.xml"
           reporter: java-junit
 
