@@ -24,10 +24,11 @@ jobs:
           pip install -r tests/requirements.txt
 
       - name: Run behave in the 'tests' folder
+        working-directory: tests
         env:
-          SKETCH_FILE: ArdulinkProtocol/ArdulinkProtocol.ino
+          SKETCH_FILE: ../ArdulinkProtocol/ArdulinkProtocol.ino
         run: |
-          behave tests
+          behave
 
       - name: Test Report
         uses: dorny/test-reporter@31a54ee7ebcacc03a09ea97a7e5465a47b84aea5 # v1
