@@ -89,12 +89,13 @@ def before_scenario(context, scenario):
 
     for attempt in range(retry_count):
         try:
+            # sleep before first try since the websocket server start needs some time
+            time.sleep(retry_interval)
             context.ws = create_connection(context.ws_url, timeout=5)
             logger.info("WebSocket connection established.")
             break
         except Exception as e:
             logger.warning(f"Attempt {attempt + 1}/{retry_count} failed: {e}")
-            time.sleep(retry_interval)
             retry_interval = min(retry_interval * 2, 10)
     else:
         raise RuntimeError("Failed to establish WebSocket connection after retries.")
