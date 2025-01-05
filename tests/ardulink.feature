@@ -51,7 +51,7 @@ Feature: Ardulink Behavior
     Then serial response "alp://rply/ko?id=42" was received
 
 
-  Scenario: Unknown command result in  rply
+  Scenario: Unknown command result in ko rply
     When serial message "alp://XXXX/123/abc/X-Y-Z?id=42" is sent
     Then serial response "alp://rply/ko?id=42" was received
 
