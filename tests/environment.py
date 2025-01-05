@@ -2,7 +2,6 @@ import time
 import os
 import docker
 import serial
-from websocket import create_connection
 from websocket_listener import WebSocketListener
 import logging
 
@@ -80,28 +79,11 @@ def before_scenario(context, scenario):
     if not ports or not ports[0].get('HostPort'):
         raise RuntimeError("Failed to retrieve the host port for the WebSocket connection.")
     host_port = ports[0]['HostPort']
-    context.ws_url = f"ws://localhost:{host_port}"
+    ws_url = f"ws://localhost:{host_port}"
     logger.info(f"WebSocket URL: {context.ws_url}")
 
-    # Set up WebSocket connection with retries
-    retry_count = 20
-    retry_interval = 1
-
-    for attempt in range(retry_count):
-        try:
-            # sleep before first try since the websocket server start needs some time
-            time.sleep(retry_interval)
-            context.ws = create_connection(context.ws_url, timeout=5)
-            logger.info("WebSocket connection established.")
-            break
-        except Exception as e:
-            logger.warning(f"Attempt {attempt + 1}/{retry_count} failed: {e}")
-            retry_interval = min(retry_interval * 2, 10)
-    else:
-        raise RuntimeError("Failed to establish WebSocket connection after retries.")
-
-    # Start the WebSocket listener
-    context.listener = WebSocketListener(context.ws)
+    # Start the WebSocket listener with retries
+    context.listener = WebSocketListener(ws_url, max_retries=20, retry_interval=1)
     context.listener.start()
     logger.info("WebSocket listener started.")
 

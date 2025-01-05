@@ -2,21 +2,44 @@ import websocket
 import threading
 import queue
 import json
+import time
 
 class WebSocketListener:
-    def __init__(self, ws):
+    def __init__(self, ws_url, max_retries=20, retry_interval=1):
         """
-        Initialize the WebSocketListener with the WebSocket connection.
-        :param ws: WebSocket object
+        Initialize the WebSocketListener with the WebSocket URL and retry settings.
+        :param ws_url: URL of the WebSocket server
+        :param max_retries: Maximum number of retries for the initial connection
+        :param retry_interval: Time (in seconds) between retry attempts
         """
-        self.ws = ws
+        self.ws_url = ws_url
+        self.ws = None
         self.queue = queue.Queue()
-        self.running = True
+        self.running = False
+        self.max_retries = max_retries
+        self.retry_interval = retry_interval
 
     def start(self):
         """
-        Start a background thread that listens for WebSocket messages.
+        Start the WebSocket connection and listener in a background thread with retries.
         """
+        self.running = True
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                # sleep before first try since the websocket server start needs some time
+                if attempt < self.max_retries:
+                    time.sleep(self.retry_interval)
+                else:
+                    print("Max retries reached. Failed to establish WebSocket connection.")
+                    self.running = False
+                    return
+                print(f"Attempting to connect to WebSocket ({attempt}/{self.max_retries})...")
+                self.ws = websocket.create_connection(self.ws_url, timeout=5)
+                print(f"WebSocket connection established to {self.ws_url}")
+                break
+            except Exception as e:
+                print(f"Connection attempt {attempt} failed: {e}")
+
         self.thread = threading.Thread(target=self._listen, daemon=True)
         self.thread.start()
 
@@ -28,15 +51,15 @@ class WebSocketListener:
             try:
                 message = self.ws.recv()
                 if not message:
-                    # Skip empty messages
                     continue
+
                 try:
                     parsed_message = json.loads(message)
                     print(f"Background listener received: {parsed_message}")
                     self.queue.put(parsed_message)
                 except json.JSONDecodeError as e:
                     print(f"Received invalid JSON message: {message}, error: {e}")
-                    
+
             except websocket.WebSocketTimeoutException:
                 print("WebSocket recv timed out.")
             except websocket.WebSocketConnectionClosedException:
@@ -51,18 +74,18 @@ class WebSocketListener:
         Stop the WebSocket listener and close the WebSocket connection.
         """
         if not self.running:
-            return  # Already stopped
+            return
 
-        self.running = False  # Signal the listener to stop
+        self.running = False
         try:
             if self.ws:
-                self.ws.close()  # Close the WebSocket connection
+                self.ws.close()
                 print("WebSocket connection closed.")
         except Exception as e:
             print(f"Error closing WebSocket connection: {e}")
 
         if self.thread:
-            self.thread.join()  # Wait for the listener thread to finish
+            self.thread.join()
             print("WebSocket listener thread stopped.")
 
     def get_message(self, timeout=None):
@@ -81,5 +104,4 @@ class WebSocketListener:
         Get all messages from the queue without removing them.
         :return: A list of all messages in the queue
         """
-        return list(self.queue.queue)  # Return a copy of the current messages in the queue
-
+        return list(self.queue.queue)
