@@ -23,7 +23,7 @@ jobs:
 
       - name: Compile Arduino Sketch
         run: |
-          arduino-cli compile --fqbn arduino:avr:uno ArdulinkProtocol/ArdulinkProtocol.ino
+          arduino-cli compile --fqbn arduino:avr:uno ArdulinkProtocol/ArdulinkProtocol.ino --output-dir ArdulinkProtocol
 
 
       - name: Set up Python
