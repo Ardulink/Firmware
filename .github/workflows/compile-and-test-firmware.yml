@@ -1,4 +1,4 @@
-name: Compile and test Arduino Sketch
+name: Compile Arduino Sketch
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  setup:
+  compile:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,18 +21,11 @@ jobs:
           arduino-cli core update-index
           arduino-cli core install arduino:avr
 
-  compile:
       - name: Compile Arduino Sketch
         run: |
           arduino-cli compile --fqbn arduino:avr:uno ArdulinkProtocol/ArdulinkProtocol.ino --output-dir ArdulinkProtocol
 
-      - name: Save hex-artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ardulink-firmware-uno
-          path: ArdulinkProtocol/ArdulinkProtocol.ino.hex
 
-  test:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -61,3 +54,11 @@ jobs:
           name: Tests Report
           path: "tests/test-results/*.xml"
           reporter: java-junit
+
+
+      - name: Save hex-artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ardulink-firmware-uno
+          path: ArdulinkProtocol/ArdulinkProtocol.ino.hex
+
