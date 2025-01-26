@@ -22,6 +22,9 @@ jobs:
           arduino-cli core install arduino:avr
 
   compile:
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Compile Arduino Sketch
         run: |
           arduino-cli compile --fqbn arduino:avr:uno ArdulinkProtocol/ArdulinkProtocol.ino --output-dir ArdulinkProtocol
@@ -33,6 +36,9 @@ jobs:
           path: ArdulinkProtocol/ArdulinkProtocol.ino.hex
 
   test:
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
