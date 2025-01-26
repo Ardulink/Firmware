@@ -1,20 +1,33 @@
-name: Run Pytest
+name: Compile Arduino Sketch
 
 on:
-  workflow_dispatch:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
-  test:
+  compile:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Arduino CLI
+        uses: arduino/setup-arduino-cli@v2.0.0
+
+      - name: Install Arduino Core
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr
+
+      - name: Compile Arduino Sketch
+        run: |
+          arduino-cli compile --fqbn arduino:avr:uno ArdulinkProtocol/ArdulinkProtocol.ino
+
+
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
@@ -26,7 +39,7 @@ jobs:
       - name: Run behave in the 'tests' folder
         working-directory: tests
         env:
-          SKETCH_FILE: ../ArdulinkProtocol/ArdulinkProtocol.ino
+          SKETCH_FILE: ../ArdulinkProtocol/ArdulinkProtocol.ino.hex
         run: |
           behave -f pretty -f html-pretty
 
@@ -37,4 +50,11 @@ jobs:
           name: Tests Report
           path: "tests/test-results/*.xml"
           reporter: java-junit
+
+
+      - name: Save hex-artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: uno-hex
+          path: ArdulinkProtocol/ArdulinkProtocol.ino.hex
 
