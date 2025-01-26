@@ -37,10 +37,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r tests/requirements.txt
 
+      - name: Set working directory path
+        id: set-path
+        run: echo "CURRENT_DIR=$(pwd)" >> $GITHUB_ENV
       - name: Run behave in the 'tests' folder
         working-directory: tests
         env:
-          SKETCH_FILE: ../ArdulinkProtocol/ArdulinkProtocol.ino.hex
+          SKETCH_FILE: ${{ env.CURRENT_DIR }}/ArdulinkProtocol/ArdulinkProtocol.ino.hex
         run: |
           behave -f pretty -f html-pretty
 
