@@ -170,7 +170,9 @@ void setup() {
     digitalWrite(i, LOW);
   }
 
-  sendRply(0, true); // Send Rply to signal ready state
+  Serial.print("alp://info/");
+  Serial.print('\n'); // End of Message
+  Serial.flush();
 }
 
 void loop() {

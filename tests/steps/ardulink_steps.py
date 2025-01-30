@@ -55,8 +55,8 @@ def wait_for_serial_message(context, expected_response, timeout=30):
 
 @given('arduino is in steady state')
 def arduino_is_in_steady_state(context):
-    send_serial_message(context, "alp://notn/0/0?id=0")
-    wait_for_serial_message(context, "alp://rply/ok?id=0")
+    send_serial_message(context, "alp://ping?id=123")
+    wait_for_serial_message(context, "alp://rply/ok?id=123")
     
 @given('serial message "{message}" is sent')
 @when('serial message "{message}" is sent')
