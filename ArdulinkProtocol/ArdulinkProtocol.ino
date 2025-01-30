@@ -55,6 +55,10 @@ bool setListeningState(int pinIndex, bool listening) {
   return true;
 }
 
+bool noop(const char* cParams, size_t length) {
+  return true;
+}
+
 bool handleKprs(const String& params, size_t length) {
   // here you can write your own code. For instance the commented code change pin intensity if you press 'a' or 's'
   // take the command and change intensity on pin 11 this is needed just as example for this sketch
@@ -143,6 +147,7 @@ bool handleCust(const char* cParams, size_t length) {
 }
 
 const CommandHandler commandHandlers[] = {
+    {"ping", noop},
     {"kprs", handleKprs},
     {"ppin", handlePpin},
     {"ppsw", handlePpsw},
