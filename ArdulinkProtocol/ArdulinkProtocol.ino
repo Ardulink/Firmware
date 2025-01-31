@@ -170,7 +170,7 @@ void setup() {
     digitalWrite(i, LOW);
   }
 
-  Serial.print("alp://info/");
+  Serial.print("alp://info/fw=1.2");
   Serial.print('\n'); // End of Message
   Serial.flush();
 }
