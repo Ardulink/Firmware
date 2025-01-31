@@ -5,7 +5,7 @@ Feature: Ardulink Behavior
 
     
   Scenario: Can ping Arduino
-    When serial message "alp://ppsw/ping?id=123" is sent
+    When serial message "alp://ping?id=123" is sent
     Then serial response "alp://rply/ok?id=123" was received
 
 
