@@ -109,14 +109,6 @@ def after_scenario(context, scenario):
         except Exception as e:
             logger.error(f"Error stopping WebSocket listener: {e}")
 
-    # Close WebSocket connection
-    if getattr(context, 'ws', None):
-        try:
-            context.ws.close()
-            logger.info("WebSocket connection closed.")
-        except Exception as e:
-            logger.error(f"Error closing WebSocket connection: {e}")
-
     # Close the serial connection
     if getattr(context, 'serial_conn', None):
         try:
