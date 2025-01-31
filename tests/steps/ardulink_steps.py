@@ -10,12 +10,14 @@ def parse_value(value):
         return value.lower() == "true" or value.lower() == "on" or value.lower() == "high"
     return int(value)
 
+
 def send_ws_message(ws, message):
     reply_id = str(uuid.uuid4())
     message["replyId"] = reply_id
     ws.send(json.dumps(message))
     print(f"Sent WebSocket message: {json.dumps(message)}")
     return reply_id
+
 
 def wait_for_reply(listener, reply_id, timeout=20):
     start_time = time.time()
@@ -28,6 +30,7 @@ def wait_for_reply(listener, reply_id, timeout=20):
         time.sleep(0.1)
     raise AssertionError(f"Reply for replyId {reply_id} not received within {timeout} seconds.")
 
+
 def wait_for_ws_message(listener, pin, expected_state, timeout=30):
     start_time = time.time()
     while time.time() - start_time < timeout:
@@ -36,6 +39,7 @@ def wait_for_ws_message(listener, pin, expected_state, timeout=30):
             return
         time.sleep(0.1)
     raise AssertionError(f"Expected state {expected_state} for pin {pin} not received within {timeout} seconds.")
+
 
 def send_serial_message(context, message):
     """Send a message via the serial connection."""
@@ -72,20 +76,24 @@ def wait_for_serial_message(context, expected_response, timeout=30):
 def arduino_is_in_steady_state(context):
     wait_for_serial_message(context, re.compile(r"^alp://info/"))
 
+
 @given('serial message "{message}" is sent')
 @when('serial message "{message}" is sent')
 def serial_message_is_sent(context, message):
     send_serial_message(context, message)
+
 
 @when('serial response "{response}" was received')
 @then('serial response "{response}" was received')
 def serial_response_was_received(context, response):
     wait_for_serial_message(context, response)
 
+
 @given('the pin {pin} is {mode} monitored')
 def step_watch_pin(context, pin, mode):
     reply_id = send_ws_message(context.listener.ws, {"type": "pinMode", "pin": pin, "mode": mode})
     wait_for_reply(context.listener, reply_id)
+
 
 @given('the pin {pin} is set to {value}')
 @when('the pin {pin} is set to {value}')
@@ -93,6 +101,7 @@ def step_set_pin(context, pin, value):
     parsed_value = parse_value(value)
     reply_id = send_ws_message(context.listener.ws, {"type": "pinState", "pin": pin, "state": parsed_value})
     wait_for_reply(context.listener, reply_id)
+
 
 @then('the pin {pin} should be {state}')
 def step_check_pin_state(context, pin, state):
