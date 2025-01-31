@@ -66,7 +66,8 @@ def before_scenario(context, scenario):
             environment={
                 "VIRTUALDEVICE": serial_port,
                 "FILENAME": sketch_file,
-                "DEVICEUSER": str(os.getuid())
+                "DEVICEUSER": str(os.getuid()),
+                "PAUSE_ON_START": True
             }
         )
         logger.info("Docker container started.")
@@ -95,8 +96,10 @@ def before_scenario(context, scenario):
             timeout=SERIAL_TIMEOUT
         )
         logger.info(f"Serial connection established on {serial_port}.")
+        context.listener.control_play()
     except serial.SerialException as e:
         raise RuntimeError(f"Failed to open serial port {serial_port}: {e}")
+
 
 def after_scenario(context, scenario):
     logger.info("Cleaning up test environment...")

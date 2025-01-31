@@ -88,6 +88,12 @@ class WebSocketListener:
             self.thread.join()
             print("WebSocket listener thread stopped.")
 
+    def control_pause(self):
+        self.ws.send(json.dumps({"type": "control", "action": "pause"}))
+
+    def control_play(self):
+        self.ws.send(json.dumps({"type": "control", "action": "unpause"}))
+
     def get_message(self, timeout=None):
         """
         Get the next message from the queue.
