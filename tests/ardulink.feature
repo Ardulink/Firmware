@@ -4,6 +4,11 @@ Feature: Ardulink Behavior
     Given arduino is in steady state
 
     
+  Scenario: Can ping Arduino
+    When serial message "alp://ppsw/ping?id=123" is sent
+    Then serial response "alp://rply/ok?id=123" was received
+
+
   Scenario: Can switch digital on and off
     Given the pin D12 is digital monitored
 
