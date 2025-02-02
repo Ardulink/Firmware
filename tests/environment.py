@@ -60,11 +60,9 @@ def before_scenario(context, scenario):
             auto_remove=False,
             ports={"8080/tcp": None},
             volumes={
-                os.path.abspath(sketch_dir): {"bind": "/sketch", "mode": "ro"}
+                os.path.abspath(sketch_dir): {"bind": "/sketch", "mode": "ro"},
+                "/dev/": {"bind": "/dev/", "mode": "rw"}
             },
-            devices=[
-                f"{serial_port}:{serial_port}"
-            ],
             environment={
                 "VIRTUALDEVICE": serial_port,
                 "FILENAME": sketch_file,
