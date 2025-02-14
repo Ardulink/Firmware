@@ -64,3 +64,18 @@ jobs:
             ArdulinkProtocol/ArdulinkProtocol.ino
             ArdulinkProtocol/ArdulinkProtocol.ino.hex
 
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        with:
+          artifacts: |
+            ArdulinkProtocol/ArdulinkProtocol.ino,
+            ArdulinkProtocol/ArdulinkProtocol.ino.hex
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref }}
+          name: Release ${{ github.ref }}
+          body: |
+            New release for Ardulink Protocol.
+          draft: false
+          prerelease: false
+
