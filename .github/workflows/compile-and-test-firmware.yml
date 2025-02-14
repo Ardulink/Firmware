@@ -60,5 +60,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ardulink-firmware-uno
-          path: ArdulinkProtocol/ArdulinkProtocol.ino.hex
+          path: |
+            ArdulinkProtocol/ArdulinkProtocol.ino
+            ArdulinkProtocol/ArdulinkProtocol.ino.hex
 
