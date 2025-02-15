@@ -17,10 +17,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ardulink-firmware-uno
-          path: ./artifact
+          path: ardulink-firmware-uno.zip
 
       - name: Unzip artifact
-        run: unzip ./artifact/ardulink-firmware-uno.zip -d ./ArdulinkProtocol
+        run: unzip ardulink-firmware-uno.zip -d ./ArdulinkProtocol
 
       - name: Create Release
         uses: ncipollo/release-action@v1
