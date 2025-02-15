@@ -1,9 +1,8 @@
 name: Release Firmware
 
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [published]
 
 jobs:
   release:
@@ -21,7 +20,7 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "ArdulinkProtocol/ArdulinkProtocol.ino.hex"
+          artifacts: "ArdulinkProtocol/ArdulinkProtocol.ino,ArdulinkProtocol/ArdulinkProtocol.ino.hex"
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref }}
           name: Release ${{ github.ref }}
