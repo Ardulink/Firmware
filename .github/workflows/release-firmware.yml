@@ -3,20 +3,14 @@ name: Release Firmware
 on:
   release:
     types: [published]
-  workflow_run:
-    workflows: ["Compile Arduino Sketch"]
-    types:
-      - completed
 
 jobs:
+  compile_and_test:
+    uses: ./.github/compile-and-test-firmware.yml
+
   release:
-    runs-on: ubuntu-latest
-    needs: compile
-
+    needs: compile_and_test
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
@@ -33,4 +27,3 @@ jobs:
             New release for Ardulink Protocol.
           draft: false
           prerelease: false
-
