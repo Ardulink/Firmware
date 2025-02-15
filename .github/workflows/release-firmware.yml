@@ -17,6 +17,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ardulink-firmware-uno
+          path: ./artifact
+
+      - name: Unzip artifact
+        run: unzip ./artifact/ardulink-firmware-uno.zip -d ./ArdulinkProtocol
 
       - name: Create Release
         uses: ncipollo/release-action@v1
@@ -24,8 +28,8 @@ jobs:
           artifacts: "ArdulinkProtocol/ArdulinkProtocol.ino,ArdulinkProtocol/ArdulinkProtocol.ino.hex"
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref }}
-          name: Release ${{ github.ref }}
+          name: ${{ github.ref_name }}
           body: |
             New release for Ardulink Protocol.
-          draft: false
+          draft: true
           prerelease: false
