@@ -1,9 +1,10 @@
 name: Release Firmware
 
 on:
-  release:
-    types: [published]
-
+  push:
+    tags:
+      - 'v*'
+    
 jobs:
   compile_and_test:
     uses: ./.github/workflows/compile-and-test-firmware.yml
