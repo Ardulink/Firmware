@@ -6,9 +6,10 @@ on:
 
 jobs:
   compile_and_test:
-    uses: ./.github/compile-and-test-firmware.yml
+    uses: ./.github/workflows/compile-and-test-firmware.yml
 
   release:
+    runs-on: ubuntu-latest
     needs: compile_and_test
     steps:
       - name: Download artifact
