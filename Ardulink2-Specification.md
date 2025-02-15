@@ -82,6 +82,12 @@ This protocol enables communication between an Arduino device and a host system 
   - `value`: The custom message value.
   - `id`: *(Optional)* Unique message identifier. If provided, it will be included in the response.
 
+### 11. **Ping Message (ping)**
+- **Command**: `alp://cust/pingid=<id>` *(Optional: `?id=<id>`)*  
+- **Description**: Pings the Arduino. Can be used to verify if the Arduino reponds (via id)
+- **Parameters**:
+  - `id`: *(Optional)* Unique message identifier. If provided, it will be included in the response.
+
 ---
 
 ## Response Format
