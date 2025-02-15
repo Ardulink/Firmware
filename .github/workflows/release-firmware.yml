@@ -17,17 +17,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ardulink-firmware-uno
-          path: ardulink-firmware-uno.zip
-
-      - name: Print current working directory
-        run: pwd
-      - name: List files in the working directory
-        run: ls -al .
-      - name: Find
-        run: find .
-
-      - name: Unzip artifact
-        run: unzip ardulink-firmware-uno.zip -d ./ArdulinkProtocol
+          path: ArdulinkProtocol
 
       - name: Create Release
         uses: ncipollo/release-action@v1
