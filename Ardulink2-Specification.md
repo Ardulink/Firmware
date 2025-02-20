@@ -5,6 +5,14 @@ This protocol enables communication between an Arduino device and a host system 
 
 - **Note**: The `id=<id>` parameter is **optional** in all commands. If included in the command, it will be included in the response. If no `id` is provided in the command, there will be no response.
 
+## Startup Message
+Upon initialization, the Arduino sends an informational message containing key/value pairs. Currently, it includes the firmware version:
+
+`alp://info/fw=1.2`
+
+Additional key/value pairs may be added in the future. This message is sent once when the Arduino starts up and establishes a serial connection.
+
+
 ## Command Formats
 
 ### 1. **Key Press (kprs)**
