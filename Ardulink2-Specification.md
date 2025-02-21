@@ -12,6 +12,7 @@ Upon initialization, the Arduino sends an informational message containing key/v
 
 Additional key/value pairs may be added in the future. This message is sent once when the Arduino starts up and establishes a serial connection.
 
+**Note:** The info message at startup was introduced with firmware version 1.2. In previous versions, only senseless reply message was sent to signal that the Arduino is ready.
 
 ## Command Formats
 
