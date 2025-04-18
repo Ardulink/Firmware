@@ -48,8 +48,11 @@ def before_scenario(context, scenario):
     sketch_path = os.getenv("SKETCH_FILE")
     if not sketch_path:
         raise ValueError("Environment variable 'SKETCH_FILE' is not set.")
-    
-    sketch_dir, sketch_file = os.path.split(sketch_path)
+
+    cwd = os.getcwd()
+    sketch_dir = cwd
+    sketch_file = os.path.relpath(sketch_path, cwd)
+
     docker_image_tag = os.getenv("DOCKER_IMAGE_TAG", "latest")
     serial_port = get_unused_serial_port()
 
