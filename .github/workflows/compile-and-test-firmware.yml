@@ -42,7 +42,7 @@ jobs:
         env:
           SKETCH_FILE: ArdulinkProtocol/ArdulinkProtocol.ino.hex
         run: |
-          behave -f pretty -f html-pretty tests
+          behave -f pretty tests
 
       - name: Test Report
         uses: dorny/test-reporter@6e6a65b7a0bd2c9197df7d0ae36ac5cee784230c # v1
