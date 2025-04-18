@@ -61,7 +61,8 @@ jobs:
             ArdulinkProtocol/ArdulinkProtocol.ino
             ArdulinkProtocol/ArdulinkProtocol.ino.hex
 
-      - name: Verify if the examples do compile
+      - name: Verify if the examples do compile and run tests
         run: |
           ./examples/compile-all.sh
+          ./examples/run-tests.sh
 
