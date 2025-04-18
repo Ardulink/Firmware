@@ -25,8 +25,8 @@ your needs.
 #define DIGITAL_PIN_LISTENING_NUM 14 // Change 14 if you have a different number of pins.
 #define ANALOG_PIN_LISTENING_NUM 6 // Change 6 if you have a different number of pins.
 
-String inputString = "";         // a string to hold incoming data (this is general code you can reuse)
-boolean stringComplete = false;  // whether the string is complete (this is general code you can reuse)
+String inputString = "";         // a string to hold incoming data
+boolean stringComplete = false;  // whether the string is complete
 String rplyResult = "";
 
 boolean pinListening[DIGITAL_PIN_LISTENING_NUM + ANALOG_PIN_LISTENING_NUM] = { false }; // Array used to know which pins on the Arduino must be listening.
@@ -57,24 +57,6 @@ bool setListeningState(int pinIndex, bool listening) {
 
 bool noop(const char* cParams, size_t length) {
   return true;
-}
-
-bool handleKprs(const String& params, size_t length) {
-  // here you can write your own code. For instance the commented code change pin intensity if you press 'a' or 's'
-  // take the command and change intensity on pin 11 this is needed just as example for this sketch
-  
-//  static int intensity = 0;
-//  char commandChar = params.charAt(3);
-//  if (commandChar == 'a') { // If press 'a' less intensity
-//    intensity = max(0, intensity - 1);
-//    analogWrite(11, intensity );
-//    return true;
-//   } else if (commandChar == 's') { // If press 's' more intensity
-//    intensity = min(125, intensity + 1);
-//    analogWrite(11, intensity );
-//    return true;
-//  }
-  return false;
 }
 
 bool handlePpin(const char* cParams, size_t length) {
@@ -244,11 +226,6 @@ void sendRply(int id, bool ok) {
   Serial.flush();
 }
 
-bool handleCustomMessage(String customId, String value) {
-    // here you can write your own code. 
-  return false;
-}
-
 // Reads 4 times and computes the average value
 int highPrecisionAnalogRead(int pin) {
     const int numReadings = 4;
@@ -262,10 +239,9 @@ int highPrecisionAnalogRead(int pin) {
 
 /*
  SerialEvent occurs whenever a new data comes in the
- hardware serial RX.  This routine is run between each
+ hardware serial RX. This routine is run between each
  time loop() runs, so using delay inside loop can delay
- response.  Multiple bytes of data may be available.
- This is general code you can reuse.
+ response. Multiple bytes of data may be available.
  */
 void serialEvent() {
   while (Serial.available() && !stringComplete) {
