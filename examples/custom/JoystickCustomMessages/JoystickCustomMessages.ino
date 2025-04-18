@@ -21,6 +21,10 @@ When you find "this is needed just as example for this sketch" then it means tha
 you code useful for a specific purpose. In this case you have to modify it to suit 
 your needs.
 */
+#define X_AXIS_1 10
+#define X_AXIS_2 11
+#define Y_AXIS_1  5 
+#define Y_AXIS_2  6
 
 bool handleCustomMessage(String customId, String value) {        
   if (customId != "joy") {
@@ -30,20 +34,13 @@ bool handleCustomMessage(String customId, String value) {
   int separatorXYPosition = value.indexOf('/');
   int x = value.substring(0, separatorXYPosition).toInt();
   int y = value.substring(separatorXYPosition + 1).toInt();
-  if (x >= 0) { // PIN 10 and 11 x-axis
-    analogWrite(10, 0);
-    analogWrite(11, x);
-  } else {
-    analogWrite(10, -1 * x);
-    analogWrite(11, 0);
-  }
-  if (y >= 0) { // PIN 5 and 6 y-axis
-    analogWrite(5, 0);
-    analogWrite(6, y);
-  } else {
-    analogWrite(5, -1 * y);
-    analogWrite(6, 0);
-  }
+
+  bool xIsPositive = x >= 0;
+  bool yIsPositive = y >= 0;
+  analogWrite(X_AXIS_1, xIsPositive ? 0 : 0 - x);
+  analogWrite(X_AXIS_2, xIsPositive ? x : 0);
+  analogWrite(Y_AXIS_1, yIsPositive ? 0 : 0 - y);
+  analogWrite(Y_AXIS_2, yIsPositive ? y : 0);
   return true;
 }
 
