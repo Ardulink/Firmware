@@ -26,3 +26,8 @@ Feature: Ardulink Behavior
     When serial message "alp://cust/joy/5/-7?id=42" is sent
     Then serial response "alp://rply/ok?id=42" was received
     And the pin D5 should be 7
+
+  Scenario: Does return ko if message is not joy (text is case sensitive)
+    Given the pin D5 is analog monitored
+    When serial message "alp://cust/Joy/5/-7?id=42" is sent
+    Then serial response "alp://rply/ko?id=42" was received
