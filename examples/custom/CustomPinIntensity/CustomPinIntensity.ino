@@ -11,6 +11,8 @@ const Command commands[] = {
 };
 const size_t commandCount = sizeof(commands) / sizeof(commands[0]);
 
+static int intensity = 0;
+
 bool handleCustomMessage(String customId, String value) {
   // here you can write your own code. 
   bool commandHandledSuccessfully = false;
@@ -22,16 +24,11 @@ bool handleKprs(const char* cParams, size_t length) {
     const char commandChar = cParams[CHAR_AT];
     for (size_t i = 0; i < commandCount; ++i) {
       if (commands[i].code == commandChar) {
-        return adjustIntensity(commands[i].delta);
+        intensity = constrain(intensity + commands[i].delta, MIN_INTENSITY, MAX_INTENSITY);
+        analogWrite(LED_PIN, intensity);
+        return true;
       }
     }
   }
   return false;
-}
-
-bool adjustIntensity(const int delta) {
-  static int intensity = 0;
-  intensity = constrain(intensity + delta, MIN_INTENSITY, MAX_INTENSITY);
-  analogWrite(LED_PIN, intensity);
-  return true;
 }
