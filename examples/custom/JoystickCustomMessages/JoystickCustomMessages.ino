@@ -21,10 +21,10 @@ When you find "this is needed just as example for this sketch" then it means tha
 you code useful for a specific purpose. In this case you have to modify it to suit 
 your needs.
 */
-#define X_AXIS_1 10
-#define X_AXIS_2 11
-#define Y_AXIS_1  5 
-#define Y_AXIS_2  6
+#define X_AXIS_FWD 11
+#define X_AXIS_REW 10
+#define Y_AXIS_FWD  6
+#define Y_AXIS_REW  5
 
 bool handleCustomMessage(String customId, String value) {        
   if (customId != "joy") {
@@ -35,12 +35,13 @@ bool handleCustomMessage(String customId, String value) {
   int x = value.substring(0, separatorXYPosition).toInt();
   int y = value.substring(separatorXYPosition + 1).toInt();
 
-  bool xIsPositive = x >= 0;
-  bool yIsPositive = y >= 0;
-  analogWrite(X_AXIS_1, xIsPositive ? 0  : 0-x);
-  analogWrite(X_AXIS_2, xIsPositive ? x  :   0);
-  analogWrite(Y_AXIS_1, yIsPositive ? 0  : 0-y);
-  analogWrite(Y_AXIS_2, yIsPositive ? y  :   0);
+  const bool xFwd = x >= 0;
+  const bool yFwd = y >= 0;
+  analogWrite(xFwd ? X_AXIS_FWD : X_AXIS_REW, abs(x));
+  analogWrite(xFwd ? X_AXIS_REW : X_AXIS_FWD, 0);
+  analogWrite(yFwd ? Y_AXIS_FWD : Y_AXIS_REW, abs(y));
+  analogWrite(yFwd ? Y_AXIS_REW : Y_AXIS_FWD, 0);
+
   return true;
 }
 
