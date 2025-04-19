@@ -8,22 +8,23 @@ bool handleCustomMessage(String customId, String value) {
 }
 
 bool handleKprs(const char* cParams, size_t length) {
-  static int intensity = 0;
-
   if (length < CHAR_AT + 1) {
     return false;
   }
   char commandChar = cParams[CHAR_AT];
+  if (commandChar == 's') {
+    // If press 's' more intensity
+    return adjustIntensity(+1);
+  }
   if (commandChar == 'a') {
     // If press 'a' less intensity
-    intensity = max(0, intensity - 1);
-    analogWrite(LED_PIN, intensity);
-    return true;
-  } else if (commandChar == 's') {
-    // If press 's' more intensity
-    intensity = min(127, intensity + 1);
-    analogWrite(LED_PIN, intensity);
-    return true;
+    return adjustIntensity(-1);
   }
   return false;
+}
+
+bool adjustIntensity(int delta) {
+  static int intensity = 0;
+  analogWrite(LED_PIN, intensity = constrain(intensity + delta, 0, 127));
+  return true;
 }
