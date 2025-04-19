@@ -1,6 +1,16 @@
 #define LED_PIN 11
 #define CHAR_AT 3
 
+#define MIN_INTENSITY 0
+#define MAX_INTENSITY 127
+
+struct Command { char code; int delta; };
+const Command commands[] = {
+  {'s', +1},
+  {'a', -1}
+};
+const size_t commandCount = sizeof(commands) / sizeof(commands[0]);
+
 bool handleCustomMessage(String customId, String value) {
   // here you can write your own code. 
   bool commandHandledSuccessfully = false;
@@ -9,19 +19,19 @@ bool handleCustomMessage(String customId, String value) {
 
 bool handleKprs(const char* cParams, size_t length) {
   if (length > CHAR_AT) {
-    char commandChar = cParams[CHAR_AT];
-    if (commandChar == 's') {
-      return adjustIntensity(+1);
-    }
-    if (commandChar == 'a') {
-      return adjustIntensity(-1);
+    const char commandChar = cParams[CHAR_AT];
+    for (size_t i = 0; i < commandCount; ++i) {
+      if (commands[i].code == commandChar) {
+        return adjustIntensity(commands[i].delta);
+      }
     }
   }
   return false;
 }
 
-bool adjustIntensity(int delta) {
+bool adjustIntensity(const int delta) {
   static int intensity = 0;
-  analogWrite(LED_PIN, intensity = constrain(intensity + delta, 0, 127));
+  intensity = constrain(intensity + delta, MIN_INTENSITY, MAX_INTENSITY);
+  analogWrite(LED_PIN, intensity);
   return true;
 }
