@@ -68,6 +68,7 @@ def before_scenario(context, scenario):
             },
             environment={
                 "VIRTUALDEVICE": serial_port,
+                "BAUDRATE": SERIAL_BAUDRATE,
                 "FILENAME": sketch_file,
                 "DEVICEUSER": str(os.getuid()),
                 "PAUSE_ON_START": True
