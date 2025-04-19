@@ -12,7 +12,7 @@ This repo hosts:
 
 ## 📦 Releases
 
-Ready-to-use precompiled `.hex` files for various Arduino boards (e.g. Uno, Nano, Mega) are available on the [Releases Page](https://github.com/yourusername/your-repo/releases).  
+Ready-to-use precompiled `.hex` files for various Arduino boards (e.g. Uno, Nano, Mega) are available on the [Releases Page](https://github.com/Ardulink/Firmware/releases).  
 
 You can upload these using tools like:
 - [XLoader (Windows)](http://russemotto.com/xloader/)
