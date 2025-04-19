@@ -33,3 +33,9 @@ Feature: Ardulink Behavior
     When serial message "alp://ḱprs/xxxy?id=42" is sent
     Then serial response "alp://rply/ko?id=42" was received
 
+  Scenario: Does return ko if key has not at least three chars
+    When serial message "alp://ḱprs/xxx?id=42" is sent
+    Then serial response "alp://rply/ko?id=42" was received
+    When serial message "alp://kprs/xxxs?id=43" is sent
+    Then serial response "alp://rply/ok?id=43" was received
+
