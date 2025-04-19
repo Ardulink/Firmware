@@ -56,6 +56,11 @@ Feature: Ardulink Behavior
     Then serial response "alp://rply/ko?id=42" was received
 
 
+  Scenario: Keypress messages are not supported in default implementation
+    When serial message "alp://kprs/xxxx?id=42" is sent
+    Then serial response "alp://rply/ko?id=42" was received
+
+
   Scenario: Unknown command result in ko rply
     When serial message "alp://XXXX/123/abc/X-Y-Z?id=42" is sent
     Then serial response "alp://rply/ko?id=42" was received
