@@ -37,10 +37,10 @@ bool handleCustomMessage(String customId, String value) {
 
   bool xIsPositive = x >= 0;
   bool yIsPositive = y >= 0;
-  analogWrite(X_AXIS_1, xIsPositive ? 0  : abs(x));
-  analogWrite(X_AXIS_2, xIsPositive ? x  :     0 );
-  analogWrite(Y_AXIS_1, yIsPositive ? 0  : abs(y));
-  analogWrite(Y_AXIS_2, yIsPositive ? y  :     0 );
+  analogWrite(X_AXIS_1, xIsPositive ? 0  : 0-x);
+  analogWrite(X_AXIS_2, xIsPositive ? x  :   0);
+  analogWrite(Y_AXIS_1, yIsPositive ? 0  : 0-y);
+  analogWrite(Y_AXIS_2, yIsPositive ? y  :   0);
   return true;
 }
 
