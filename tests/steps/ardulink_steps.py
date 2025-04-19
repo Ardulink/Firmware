@@ -55,7 +55,7 @@ def wait_for_serial_message(context, expected_response, timeout=30):
     is_regex = isinstance(expected_response, re.Pattern)
 
     while time.time() - start_time < timeout:
-        response = context.serial_conn.readline().decode().strip()
+        response = context.serial_conn.readline().decode('ascii', errors='ignore').strip()
         print(f"Received serial response: {response}")
         
         if is_regex:
