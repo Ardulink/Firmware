@@ -11,11 +11,9 @@ bool handleKprs(const char* cParams, size_t length) {
   if (length > CHAR_AT) {
     char commandChar = cParams[CHAR_AT];
     if (commandChar == 's') {
-      // If press 's' more intensity
       return adjustIntensity(+1);
     }
     if (commandChar == 'a') {
-      // If press 'a' less intensity
       return adjustIntensity(-1);
     }
   }
