@@ -25,6 +25,10 @@ your needs.
 #define DIGITAL_PIN_LISTENING_NUM 14 // Change 14 if you have a different number of pins.
 #define ANALOG_PIN_LISTENING_NUM 6 // Change 6 if you have a different number of pins.
 
+#define MESSAGE_SEPARATOR '\n'
+#define MESSAGE_SEPARATOR_RX MESSAGE_SEPARATOR
+#define MESSAGE_SEPARATOR_TX MESSAGE_SEPARATOR
+
 String inputString = "";         // a string to hold incoming data
 boolean stringComplete = false;  // whether the string is complete
 String rplyResult = "";
@@ -153,7 +157,7 @@ void setup() {
   }
 
   Serial.print("alp://info/fw=1.3-snapshot");
-  Serial.print('\n'); // End of Message
+  Serial.print(MESSAGE_SEPARATOR_TX);
   Serial.flush();
 }
 
@@ -205,7 +209,7 @@ void loop() {
         Serial.print(pinIndex);
         Serial.print("/");
         Serial.print(value);
-        Serial.print('\n');
+        Serial.print(MESSAGE_SEPARATOR_TX);
         Serial.flush();
       }
     }
@@ -222,7 +226,7 @@ void sendRply(int id, bool ok) {
     Serial.print(rplyResult);
     rplyResult = "";
   }        
-  Serial.print('\n'); // End of Message
+  Serial.print(MESSAGE_SEPARATOR_TX);
   Serial.flush();
 }
 
@@ -249,7 +253,7 @@ void serialEvent() {
     char inChar = (char) Serial.read();
     // if the incoming character is a newline, set a flag
     // so the main loop can do something about it:
-    if (inChar == '\n') {
+    if (inChar == MESSAGE_SEPARATOR_RX) {
       stringComplete = true;
     } else {
       // add it to the inputString:
