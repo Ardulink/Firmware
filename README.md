@@ -15,9 +15,9 @@ This repo hosts:
 Ready-to-use precompiled `.hex` files for various Arduino boards (e.g. Uno, Nano, Mega) are available on the [Releases Page](https://github.com/Ardulink/Firmware/releases).  
 
 You can upload these using tools like:
-- [XLoader (Windows)](http://russemotto.com/xloader/)
-- `avrdude` (macOS/Linux/Windows)
-- Arduino IDE (for flashing manually built sketches)
+- [XLoader](http://russemotto.com/xloader/) (Windows)
+- [avrdude](https://github.com/avrdudes/avrdude) (macOS/Linux/Windows)
+- [Arduino IDE](https://www.arduino.cc/en/software/) (for flashing manually built sketches)
 
 ---
 
