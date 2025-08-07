@@ -22,19 +22,26 @@ you code useful for a specific purpose. In this case you have to modify it to su
 your needs.
 */
 
-#define DIGITAL_PIN_LISTENING_NUM 14 // Change 14 if you have a different number of pins.
-#define ANALOG_PIN_LISTENING_NUM 6 // Change 6 if you have a different number of pins.
+
+constexpr int DIGITAL_PIN_LISTENING_NUM = 14; // Change 14 if you have a different number of pins.
+constexpr int ANALOG_PIN_LISTENING_NUM = 6;   // Change  6 if you have a different number of pins.
+
+constexpr int TOTAL_PINS = DIGITAL_PIN_LISTENING_NUM + ANALOG_PIN_LISTENING_NUM;
 
 #define MESSAGE_SEPARATOR '\n'
 #define MESSAGE_SEPARATOR_RX MESSAGE_SEPARATOR
 #define MESSAGE_SEPARATOR_TX MESSAGE_SEPARATOR
 
-String inputString = "";         // a string to hold incoming data
-boolean stringComplete = false;  // whether the string is complete
+#define INVALID_LISTENED_VALUE (-2)
+
+const size_t INPUT_BUFFER_SIZE = 128;
+char inputBuffer[INPUT_BUFFER_SIZE];  // a inputBuffer to hold incoming data
+size_t inputLength = 0;
+bool stringComplete = false;          // whether the string is complete
 String rplyResult = "";
 
 boolean pinListening[DIGITAL_PIN_LISTENING_NUM + ANALOG_PIN_LISTENING_NUM] = { false }; // Array used to know which pins on the Arduino must be listening.
-int pinListenedValue[DIGITAL_PIN_LISTENING_NUM + ANALOG_PIN_LISTENING_NUM] = { -1 }; // Array used to know which value is read last time.
+int pinListenedValue[DIGITAL_PIN_LISTENING_NUM + ANALOG_PIN_LISTENING_NUM] = { INVALID_LISTENED_VALUE }; // Array used to know which value is read last time.
 
 #define UNLIMITED_LENGTH ((size_t)-1)
 
@@ -52,10 +59,18 @@ bool parseIntPair(const char* cParams, int& first, int& second, char separator =
   return true;
 }
 
-bool setListeningState(int pinIndex, bool listening) {
-  pinListening[pinIndex] = listening;
-  pinListenedValue[pinIndex] = -1; // Reset the listened value to -1.
-  pinMode(pinIndex, listening ? INPUT : OUTPUT);
+bool setAnalogListeningState(int pin, bool listening) {
+  return setListeningState(pin, listening, DIGITAL_PIN_LISTENING_NUM + pin);
+}
+
+bool setDigitalListeningState(int pin, bool listening) {
+  return setListeningState(pin, listening, pin);
+}
+
+bool setListeningState(int pin, bool listening, int arrayIndex) {
+  pinListening[arrayIndex] = listening;
+  pinListenedValue[arrayIndex] = INVALID_LISTENED_VALUE; // Reset the listened value to INVALID_LISTENED_VALUE.
+  pinMode(pin, listening ? INPUT : OUTPUT);
   return true;
 }
 
@@ -105,28 +120,29 @@ bool handleNotn(const char* cParams, size_t length) {
 
 bool handleSrld(const char* cParams, size_t length) {
   int pin = atoi(cParams);
-  return setListeningState(pin, true);
+  return setDigitalListeningState(pin, true);
 }
 
 bool handleSpld(const char* cParams, size_t length) {
   int pin = atoi(cParams);
-  return setListeningState(pin, false);
+  return setDigitalListeningState(pin, false);
 }
 
 bool handleSrla(const char* cParams, size_t length) {
   int pin = atoi(cParams);
-  return setListeningState(DIGITAL_PIN_LISTENING_NUM + pin, true);
+  return setAnalogListeningState(pin, true);
 }
 
 bool handleSpla(const char* cParams, size_t length) {
   int pin = atoi(cParams);
-  return setListeningState(DIGITAL_PIN_LISTENING_NUM + pin, false);
+  return setAnalogListeningState(pin, false);
 }
 
 bool handleCust(const char* cParams, size_t length) {
   String params = String(cParams);
   if (length != UNLIMITED_LENGTH) params = params.substring(0, length);
   int separator = params.indexOf('/');
+  if (separator == -1) return false;
   String customId = params.substring(0, separator);
   String value = params.substring(separator + 1);
   return handleCustomMessage(customId, value);
@@ -151,7 +167,8 @@ void setup() {
   while (!Serial); // Wait until Serial is connected  
 
   // Turn off everything (not on RXTX)
-  for (int i = 2; i < DIGITAL_PIN_LISTENING_NUM; i++) {
+  for (int i = 0; i < DIGITAL_PIN_LISTENING_NUM; i++) {
+    if (i == 0 || i == 1) continue; // RX/TX
     pinMode(i, OUTPUT);
     digitalWrite(i, LOW);
   }
@@ -163,51 +180,55 @@ void setup() {
 
 void loop() {
   if (stringComplete) {
-    const char* inputCStr = inputString.c_str();
-    
-    if (strncmp(inputCStr, "alp://", 6) == 0) {
-      const char* commandAndParams = inputCStr + 6; // Skip "alp://"
-      const char* idPositionPtr = strstr(commandAndParams, "?id=");
-
-      bool ok = false;
-      for (const auto& handler : commandHandlers) {
-        int commandLength = strlen(handler.command);
-        if (strncmp(commandAndParams, handler.command, commandLength) == 0) {
-          const char* paramsStart = commandAndParams + commandLength + 1; // Skip command name
-          ok = handler.handler(paramsStart, idPositionPtr ? idPositionPtr - paramsStart : UNLIMITED_LENGTH);
-          break;
-        }
-      }
-
-      if (idPositionPtr) {
-        int id = atoi(idPositionPtr + 4); // Skip "?id=" part
-        sendRply(id, ok);
-      }
-    }
-    
-    // clear the string:
-    inputString = "";
+    inputBuffer[inputLength] = '\0';  // Null-terminate
+    handleInput(inputBuffer);
+    inputLength = 0;
     stringComplete = false;
   }
-  
-  // Send listen messages
-  for (int i = 0; i < (DIGITAL_PIN_LISTENING_NUM + ANALOG_PIN_LISTENING_NUM); i++) {
+
+  checkListeningPins();
+}
+
+void handleInput(const char* input) {
+  if (strncmp(input, "alp://", 6) != 0) return;
+
+  const char* commandAndParams = input + 6;
+  const char* idPosition = strstr(commandAndParams, "?id=");
+
+  bool ok = false;
+
+  for (const auto& handler : commandHandlers) {
+    size_t commandLength = strlen(handler.command);
+    if (strncmp(commandAndParams, handler.command, commandLength) == 0 &&
+    (commandAndParams[commandLength] == '/' || commandAndParams[commandLength] == '?' || commandAndParams[commandLength] == '\0')) {
+      const char* paramsStart = commandAndParams + commandLength + 1;
+      size_t paramLength = idPosition ? (size_t)(idPosition - paramsStart) : UNLIMITED_LENGTH;
+      ok = handler.handler(paramsStart, paramLength);
+      break;
+    }
+  }
+
+  if (idPosition) {
+    int id = atoi(idPosition + 4); // "?id="
+    sendRply(id, ok);
+  }
+}
+
+void checkListeningPins() {
+  for (int i = 0; i < TOTAL_PINS; i++) {
     bool isAnalog = i >= DIGITAL_PIN_LISTENING_NUM;
     int pinIndex = isAnalog ? i - DIGITAL_PIN_LISTENING_NUM : i;
 
-    // Check if the pin is being listened to
     if (pinListening[i]) {
       int value = isAnalog ? highPrecisionAnalogRead(pinIndex) : digitalRead(pinIndex);
 
-      // If the value has changed, update and send the new value
       if (value != pinListenedValue[i]) {
         pinListenedValue[i] = value;
-
-        Serial.print("alp://");
-        Serial.print(isAnalog ? "ared" : "dred");
-        Serial.print("/");
+        Serial.print(F("alp://"));
+        Serial.print(isAnalog ? F("ared") : F("dred"));
+        Serial.print(F("/"));
         Serial.print(pinIndex);
-        Serial.print("/");
+        Serial.print(F("/"));
         Serial.print(value);
         Serial.print(MESSAGE_SEPARATOR_TX);
         Serial.flush();
@@ -217,12 +238,12 @@ void loop() {
 }
 
 void sendRply(int id, bool ok) {
-  Serial.print("alp://rply/");
-  Serial.print(ok ? "ok" : "ko");
-  Serial.print("?id=");
+  Serial.print(F("alp://rply/"));
+  Serial.print(ok ? F("ok") : F("ko"));
+  Serial.print(F("?id="));
   Serial.print(id);
   if (rplyResult.length() > 0) {
-    Serial.print("&");
+    Serial.print(F("&"));
     Serial.print(rplyResult);
     rplyResult = "";
   }        
@@ -250,14 +271,17 @@ int highPrecisionAnalogRead(int pin) {
 void serialEvent() {
   while (Serial.available() && !stringComplete) {
     // get the new byte:
-    char inChar = (char) Serial.read();
+    char inChar = (char)Serial.read();
     // if the incoming character is a newline, set a flag
     // so the main loop can do something about it:
     if (inChar == MESSAGE_SEPARATOR_RX) {
       stringComplete = true;
-    } else {
+    } else if (inputLength < INPUT_BUFFER_SIZE - 1) {
       // add it to the inputString:
-      inputString += inChar;
+      inputBuffer[inputLength++] = inChar;
+    } else {
+      // Too long — discard
+      inputLength = 0;
     }
   }
 }
