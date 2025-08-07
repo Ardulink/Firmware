@@ -40,8 +40,8 @@ size_t inputLength = 0;
 bool stringComplete = false;          // whether the string is complete
 String rplyResult = "";
 
-boolean pinListening[DIGITAL_PIN_LISTENING_NUM + ANALOG_PIN_LISTENING_NUM] = { false }; // Array used to know which pins on the Arduino must be listening.
-int pinListenedValue[DIGITAL_PIN_LISTENING_NUM + ANALOG_PIN_LISTENING_NUM] = { INVALID_LISTENED_VALUE }; // Array used to know which value is read last time.
+boolean pinListening[TOTAL_PINS] = { false }; // Array used to know which pins on the Arduino must be listening.
+int pinListenedValue[TOTAL_PINS] = { INVALID_LISTENED_VALUE }; // Array used to know which value is read last time.
 
 #define UNLIMITED_LENGTH ((size_t)-1)
 
