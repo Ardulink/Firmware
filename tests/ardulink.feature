@@ -108,3 +108,35 @@ Feature: Ardulink Behavior
 
     When serial message "alp://spld/12?id=43" is sent
     Then serial response "alp://rply/ok?id=43" was received
+
+
+  Scenario: Re-enabling analog monitoring triggers value
+    Given the pin A5 is set to 987
+
+    When serial message "alp://srla/5?id=10" is sent
+    Then serial response "alp://rply/ok?id=10" was received
+    And serial response "alp://ared/5/987" was received
+
+    When serial message "alp://spla/5?id=11" is sent
+    Then serial response "alp://rply/ok?id=11" was received
+    # No new ared message expected here
+
+    When serial message "alp://srla/5?id=12" is sent
+    Then serial response "alp://rply/ok?id=12" was received
+    And serial response "alp://ared/5/987" was received
+
+
+  Scenario: Re-enabling digital monitoring triggers value
+    Given the pin D12 is set to high
+
+    When serial message "alp://srld/12?id=20" is sent
+    Then serial response "alp://rply/ok?id=20" was received
+    And serial response "alp://dred/12/1" was received
+
+    When serial message "alp://spld/12?id=21" is sent
+    Then serial response "alp://rply/ok?id=21" was received
+    # No dred output should happen here
+
+    When serial message "alp://srld/12?id=22" is sent
+    Then serial response "alp://rply/ok?id=22" was received
+    And serial response "alp://dred/12/1" was received
