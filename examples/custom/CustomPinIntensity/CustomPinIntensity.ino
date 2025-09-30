@@ -13,7 +13,7 @@ const size_t commandCount = sizeof(commands) / sizeof(commands[0]);
 
 static int intensity = 0;
 
-bool handleCustomMessage(String customId, String value) {
+bool handleCustomMessage(String customId, String value, char* rplyBuffer) {
   // here you can write your own code. 
   bool commandHandledSuccessfully = false;
   return commandHandledSuccessfully;

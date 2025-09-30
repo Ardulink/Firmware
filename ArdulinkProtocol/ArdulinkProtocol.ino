@@ -38,7 +38,10 @@ const size_t INPUT_BUFFER_SIZE = 128;
 char inputBuffer[INPUT_BUFFER_SIZE];  // a inputBuffer to hold incoming data
 size_t inputLength = 0;
 bool stringComplete = false;          // whether the string is complete
-String rplyResult = "";
+
+constexpr size_t RPLY_BUFFER_SIZE = 128;
+char rplyBuffer[RPLY_BUFFER_SIZE];
+size_t rplyLength = 0;
 
 boolean pinListening[TOTAL_PINS] = { false }; // Array used to know which pins on the Arduino must be listening.
 int pinListenedValue[TOTAL_PINS] = { INVALID_LISTENED_VALUE }; // Array used to know which value is read last time.
@@ -145,7 +148,7 @@ bool handleCust(const char* cParams, size_t length) {
   if (separator == -1) return false;
   String customId = params.substring(0, separator);
   String value = params.substring(separator + 1);
-  return handleCustomMessage(customId, value);
+  return handleCustomMessage(customId, value, rplyBuffer);
 }
 
 const CommandHandler commandHandlers[] = {
@@ -237,16 +240,38 @@ void checkListeningPins() {
   }
 }
 
+void rplyClear() {
+  rplyLength = 0;
+  rplyBuffer[0] = '\0';
+}
+
+bool rplyAppend(const char* text) {
+  size_t len = strlen(text);
+  if (rplyLength + len >= RPLY_BUFFER_SIZE) return false; // prevent overflow
+  memcpy(rplyBuffer + rplyLength, text, len);
+  rplyLength += len;
+  rplyBuffer[rplyLength] = '\0';
+  return true;
+}
+
+bool rplyAppendInt(int value) {
+  char tmp[16];
+  itoa(value, tmp, 10);
+  return rplyAppend(tmp);
+}
+
 void sendRply(int id, bool ok) {
   Serial.print(F("alp://rply/"));
   Serial.print(ok ? F("ok") : F("ko"));
   Serial.print(F("?id="));
   Serial.print(id);
-  if (rplyResult.length() > 0) {
+
+  if (rplyLength > 0) {
     Serial.print(F("&"));
-    Serial.print(rplyResult);
-    rplyResult = "";
-  }        
+    Serial.print(rplyBuffer);
+    rplyClear();
+  }
+
   Serial.print(MESSAGE_SEPARATOR_TX);
   Serial.flush();
 }
