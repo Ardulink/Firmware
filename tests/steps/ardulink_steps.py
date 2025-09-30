@@ -89,6 +89,12 @@ def serial_response_was_received(context, response):
     wait_for_serial_message(context, response)
 
 
+@when('serial response matches "{regex}"')
+@then('serial response matches "{regex}"')
+def serial_response_matches(context, regex):
+    wait_for_serial_message(context, re.compile(regex))
+
+
 @given('the pin {pin} is {mode} monitored')
 def step_watch_pin(context, pin, mode):
     reply_id = send_ws_message(context.listener.ws, {"type": "pinMode", "pin": pin, "mode": mode})
