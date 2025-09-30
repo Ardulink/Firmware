@@ -56,6 +56,26 @@ def before_scenario(context, scenario):
     docker_image_tag = os.getenv("DOCKER_IMAGE_TAG", "latest")
     serial_port = get_unused_serial_port()
 
+    additional_urls = os.getenv("ADDITIONAL_URLS")
+    install_cores   = os.getenv("INSTALL_CORES")
+    build_fqbn      = os.getenv("BUILD_FQBN")
+
+    env_vars = {
+        "VIRTUALDEVICE": serial_port,
+        "BAUDRATE": SERIAL_BAUDRATE,
+        "FILENAME": sketch_file,
+        "DEVICEUSER": str(os.getuid()),
+        "PAUSE_ON_START": True,
+        "ENABLE_UNSAFE_LIB_INSTALL": True
+    }
+
+    if additional_urls:
+        env_vars["ADDITIONAL_URLS"] = additional_urls
+    if install_cores:
+        env_vars["INSTALL_CORES"] = install_cores
+    if build_fqbn:
+        env_vars["BUILD_FQBN"] = build_fqbn
+
     try:
         context.container = client.containers.run(
             f"pfichtner/virtualavr:{docker_image_tag}",
@@ -66,13 +86,7 @@ def before_scenario(context, scenario):
                 os.path.abspath(sketch_dir): {"bind": "/sketch", "mode": "ro"},
                 "/dev/": {"bind": "/dev/", "mode": "rw"}
             },
-            environment={
-                "VIRTUALDEVICE": serial_port,
-                "BAUDRATE": SERIAL_BAUDRATE,
-                "FILENAME": sketch_file,
-                "DEVICEUSER": str(os.getuid()),
-                "PAUSE_ON_START": True
-            }
+            environment=env_vars
         )
         logger.info("Docker container started.")
     except docker.errors.DockerException as e:
