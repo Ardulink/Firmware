@@ -14,3 +14,7 @@ Feature: Ardulink Behavior
   Scenario: Echo params
     When serial message "alp://cust/doecho/abc?id=44" is sent
     Then serial response "alp://rply/ok?id=44&response=abc" was received
+
+  Scenario: ko if command is not exactly "doecho"
+    When serial message "alp://cust/doEcho/abc?id=45" is sent
+    Then serial response "alp://rply/ko?id=45" was received
