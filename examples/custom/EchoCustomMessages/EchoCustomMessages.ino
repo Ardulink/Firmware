@@ -24,8 +24,11 @@ your needs.
 
 bool handleCustomMessage(String customId, String value, char* rplyBuffer) {
   if (customId != "doecho") {
+    digitalWrite(12, HIGH);
     return false;
   }
+
+  digitalWrite(11, HIGH);
 
   rplyAppend("response=");
   rplyAppend(value.c_str());
