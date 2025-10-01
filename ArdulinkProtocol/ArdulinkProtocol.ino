@@ -145,7 +145,9 @@ bool handleCust(const char* cParams, size_t length) {
   String params = String(cParams);
   if (length != UNLIMITED_LENGTH) params = params.substring(0, length);
   int separator = params.indexOf('/');
-  if (separator == -1) return false;
+  if (separator == -1) {
+    return handleCustomMessage(params, "", rplyBuffer);
+  }
   String customId = params.substring(0, separator);
   String value = params.substring(separator + 1);
   return handleCustomMessage(customId, value, rplyBuffer);
