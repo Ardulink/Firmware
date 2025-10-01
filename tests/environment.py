@@ -56,9 +56,10 @@ def before_scenario(context, scenario):
     docker_image_tag = os.getenv("DOCKER_IMAGE_TAG", "latest")
     serial_port = get_unused_serial_port()
 
-    additional_urls = os.getenv("ADDITIONAL_URLS")
-    install_cores   = os.getenv("INSTALL_CORES")
-    build_fqbn      = os.getenv("BUILD_FQBN")
+    additional_urls   = os.getenv("ADDITIONAL_URLS")
+    install_cores     = os.getenv("INSTALL_CORES")
+    build_fqbn        = os.getenv("BUILD_FQBN")
+    build_extra_flags = os.getenv("BUILD_EXTRA_FLAGS")
 
     env_vars = {
         "VIRTUALDEVICE": serial_port,
@@ -75,6 +76,8 @@ def before_scenario(context, scenario):
         env_vars["INSTALL_CORES"] = install_cores
     if build_fqbn:
         env_vars["BUILD_FQBN"] = build_fqbn
+    if build_extra_flags:
+        env_vars["BUILD_EXTRA_FLAGS"] = build_extra_flags
 
     try:
         context.container = client.containers.run(

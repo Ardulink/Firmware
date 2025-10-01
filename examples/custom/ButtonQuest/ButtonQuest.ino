@@ -22,30 +22,33 @@ you code useful for a specific purpose. In this case you have to modify it to su
 your needs.
 */
 
-#include <Tiny4kOLED.h>
-#include <stdio.h>
-
-#define BUFFER_SIZE 64
 #define BUTTON_COUNT 4
 #define BUTTON_PIN_1 3
 #define BUTTON_PIN_2 8
 #define BUTTON_PIN_3 7
 #define BUTTON_PIN_4 2
 
+#ifndef OLED_DISABLED
+#include <Tiny4kOLED.h>
+#define BUFFER_SIZE 64
+#endif
+
 boolean toBePressed[BUTTON_COUNT];
-boolean initialized;
 
 bool handleCustomMessage(String customId, String value, char* rplyBuffer) {
+  static boolean initialized;
   if (!initialized) {
     pinMode(BUTTON_PIN_1, INPUT);
     pinMode(BUTTON_PIN_2, INPUT);
     pinMode(BUTTON_PIN_3, INPUT);
     pinMode(BUTTON_PIN_4, INPUT);
 
-    // oled.begin();
-    // oled.clear();
-    // oled.on();
+#ifndef OLED_DISABLED
+    oled.begin();
+    oled.clear();
+    oled.on();
     initialized = true;
+#endif
   }
   
   if (customId == "setbutton") {
@@ -67,6 +70,7 @@ bool handleCustomMessage(String customId, String value, char* rplyBuffer) {
 void setToBePressed(int index, boolean b) {
   toBePressed[index - 1] = b;
 
+#ifndef OLED_DISABLED
   static char buffer[BUFFER_SIZE];
   buffer[0] = '\0';
   int pos = 0;
@@ -78,9 +82,10 @@ void setToBePressed(int index, boolean b) {
   }
   buffer[pos] = '\0';
 
-  // oled.clear();
-  // oled.setCursor(0, 0);
-  // oled.print(buffer);
+  oled.clear();
+  oled.setCursor(0, 0);
+  oled.print(buffer);
+#endif
 }
 
 String getResult() {
