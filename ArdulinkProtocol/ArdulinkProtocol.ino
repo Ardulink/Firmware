@@ -247,6 +247,10 @@ void rplyClear() {
   rplyBuffer[0] = '\0';
 }
 
+bool rplyAppend(const String& text) {
+  return rplyAppend(text.c_str());
+}
+
 bool rplyAppend(const char* text) {
   size_t len = strlen(text);
   if (rplyLength + len >= RPLY_BUFFER_SIZE) return false; // prevent overflow

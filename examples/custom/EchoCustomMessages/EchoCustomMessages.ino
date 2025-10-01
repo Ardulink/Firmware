@@ -31,7 +31,7 @@ bool handleCustomMessage(String customId, String value, char* rplyBuffer) {
   digitalWrite(11, HIGH);
 
   rplyAppend("response=");
-  rplyAppend(value.c_str());
+  rplyAppend(value);
 
   return true;
 }

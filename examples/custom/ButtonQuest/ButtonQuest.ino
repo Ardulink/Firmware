@@ -61,7 +61,7 @@ bool handleCustomMessage(String customId, String value, char* rplyBuffer) {
     }
   } else if (customId == "getResult") {
     rplyAppend("result=");
-    rplyAppend(getResult().c_str());
+    rplyAppend(getResult());
     return true;
   }
   return false;
