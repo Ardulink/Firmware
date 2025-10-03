@@ -44,6 +44,14 @@ jobs:
         run: |
           behave --junit --junit-directory ./test-results -f pretty tests
 
+      # compile and run the tests (we don't publish the hex-file so just test it)
+      - name: Run behave in the 'tests' folder for SimpleProtocol
+        env:
+          SKETCH_FILE: variants/SimpleProtocol/
+          BUILD_EXTRA_FLAGS: -DDISABLE_DIGISPARK
+        run: |
+          behave --junit --junit-directory ./test-results -f pretty tests
+
       - name: Test Report
         uses: dorny/test-reporter@dc3a92680fcc15842eef52e8c4606ea7ce6bd3f3 # v1
         if: (success() || failure()) && github.event_name != 'pull_request' && github.actor != 'dependabot[bot]'  # run this step even if previous step failed

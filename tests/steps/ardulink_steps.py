@@ -83,6 +83,17 @@ def serial_message_is_sent(context, message):
     send_serial_message(context, message)
 
 
+@given('serial bytes {byte_sequence} are sent')
+@when('serial bytes {byte_sequence} are sent')
+def send_serial_bytes(context, byte_sequence):
+    time.sleep(3)
+    byte_strs = byte_sequence.split()
+    byte_values = [int(b, 16) for b in byte_strs]
+    msg_bytes = bytes(byte_values)
+    context.serial_conn.write(msg_bytes)
+    print(f"Sent serial bytes: {msg_bytes}")
+
+
 @when('serial response "{response}" was received')
 @then('serial response "{response}" was received')
 def serial_response_was_received(context, response):
