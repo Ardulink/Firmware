@@ -50,7 +50,7 @@ jobs:
           SKETCH_FILE: variants/SimpleProtocol/
           BUILD_EXTRA_FLAGS: -DDISABLE_DIGISPARK
         run: |
-          behave --junit --junit-directory ./test-results -f pretty tests
+          behave --junit --junit-directory ./test-results -f pretty variants/SimpleProtocol/tests
 
       - name: Test Report
         uses: dorny/test-reporter@dc3a92680fcc15842eef52e8c4606ea7ce6bd3f3 # v1
