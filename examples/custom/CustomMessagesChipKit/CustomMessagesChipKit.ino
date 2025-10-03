@@ -36,7 +36,7 @@ bool displayInitialized = false;
 
 #define BUFFER_SIZE 64
 
-bool handleCustomMessage(String customId, String value, char* rplyBuffer) {
+bool handleCustomMessage(String customId, String value) {
   if (customId != "OLED") {
     return false;
   }

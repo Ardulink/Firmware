@@ -1,4 +1,4 @@
-bool handleCustomMessage(String customId, String value, char* rplyBuffer) {
+bool handleCustomMessage(String customId, String value) {
   // here you can write your own code. 
   bool commandHandledSuccessfully = false;
   return commandHandledSuccessfully;

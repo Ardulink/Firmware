@@ -146,11 +146,11 @@ bool handleCust(const char* cParams, size_t length) {
   if (length != UNLIMITED_LENGTH) params = params.substring(0, length);
   int separator = params.indexOf('/');
   if (separator == -1) {
-    return handleCustomMessage(params, "", rplyBuffer);
+    return handleCustomMessage(params, "");
   }
   String customId = params.substring(0, separator);
   String value = params.substring(separator + 1);
-  return handleCustomMessage(customId, value, rplyBuffer);
+  return handleCustomMessage(customId, value);
 }
 
 const CommandHandler commandHandlers[] = {

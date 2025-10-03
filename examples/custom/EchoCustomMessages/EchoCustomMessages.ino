@@ -22,7 +22,7 @@ you code useful for a specific purpose. In this case you have to modify it to su
 your needs.
 */
 
-bool handleCustomMessage(String customId, String value, char* rplyBuffer) {
+bool handleCustomMessage(String customId, String value) {
   if (customId != "doecho") {
     digitalWrite(12, HIGH);
     return false;

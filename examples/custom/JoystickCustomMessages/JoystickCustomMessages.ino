@@ -26,7 +26,7 @@ your needs.
 #define Y_AXIS_FWD  6
 #define Y_AXIS_REW  5
 
-bool handleCustomMessage(String customId, String value, char* rplyBuffer) {
+bool handleCustomMessage(String customId, String value) {
   if (customId != "joy") {
     return false;
   }

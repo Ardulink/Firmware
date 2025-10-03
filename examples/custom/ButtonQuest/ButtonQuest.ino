@@ -35,7 +35,7 @@ your needs.
 
 boolean toBePressed[BUTTON_COUNT];
 
-bool handleCustomMessage(String customId, String value, char* rplyBuffer) {
+bool handleCustomMessage(String customId, String value) {
   static boolean initialized;
   if (!initialized) {
     pinMode(BUTTON_PIN_1, INPUT);
