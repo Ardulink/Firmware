@@ -1,4 +1,4 @@
-Feature: Ardulink Behavior
+Feature: SimpleProtocol Behavior
 
   Scenario: Can switch digital on and off
     Given the pin D12 is digital monitored
