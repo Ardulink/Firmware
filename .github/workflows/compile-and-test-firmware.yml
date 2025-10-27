@@ -62,7 +62,7 @@ jobs:
 
 
       - name: Save hex-artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ardulink-firmware-uno
           path: |
