@@ -27,7 +27,7 @@ You can also flash the firmware directly from your browser using the [**WebSeria
 2. Click **↻ Latest** to fetch the latest release's HEX file automatically, or paste a direct URL
 3. Click **Program** and select your Arduino's serial port when prompted
 
-> **Note:** WebSerial requires a **Chromium-based browser** (Chrome, Edge, Opera) and works over **HTTPS or localhost**.
+> **Note:** WebSerial requires **Chrome, Edge, Opera, or Firefox 151+** and works over **HTTPS or localhost**.
 
 > **Setup:** This page is served via GitHub Pages. To enable it, go to **Settings → Pages** and select **Deploy from branch: `main` / folder: `docs`**.
 
