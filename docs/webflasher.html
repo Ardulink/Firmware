@@ -48,9 +48,6 @@ progress::-moz-progress-bar{background:#f0c040;border-radius:4px}
 .log-box .log-info{color:#5dade2}
 .note{font-size:.82rem;color:#666;margin-top:.75rem;text-align:center}
 .note a{color:#f0c040}
-.baud-row{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-top:.5rem}
-.baud-row label{display:inline;margin:0}
-.baud-row select{width:auto;min-width:100px}
 @media(max-width:500px){header h1{font-size:1.3rem}.container{padding:1rem}.card{padding:1rem}}
 </style>
 </head>
@@ -61,23 +58,8 @@ progress::-moz-progress-bar{background:#f0c040;border-radius:4px}
 <p>Upload firmware to your Arduino board via WebSerial</p>
 </header>
 
-<div class="card" id="stepBoard">
-<h2>1. Select Board</h2>
-<select id="boardSelect"></select>
-<div class="baud-row">
-<label for="baudSelect">Baud rate:</label>
-<select id="baudSelect">
-<option value="115200">115200</option>
-<option value="57600">57600</option>
-<option value="38400">38400</option>
-<option value="19200">19200</option>
-<option value="9600">9600</option>
-</select>
-</div>
-</div>
-
 <div class="card" id="stepFirmware">
-<h2>2. Select Firmware (HEX)</h2>
+<h2>1. Select Firmware (HEX)</h2>
 <div class="file-row">
 <label class="file-label" for="hexInput">Choose File</label>
 <input type="file" class="file-input" id="hexInput" accept=".hex,.txt,.ino.hex">
@@ -91,7 +73,7 @@ progress::-moz-progress-bar{background:#f0c040;border-radius:4px}
 </div>
 
 <div class="card" id="stepProgram">
-<h2>3. Connect &amp; Program</h2>
+<h2>2. Connect &amp; Program</h2>
 <div class="btn-row">
 <button class="btn btn-secondary" id="connectBtn">Connect</button>
 <button class="btn btn-primary" id="programBtn" disabled>Program</button>
@@ -112,19 +94,9 @@ After clicking <strong>Connect</strong>, select your Arduino's serial port from 
 </div>
 
 <script>
-const BOARD_CONFIGS = [
-  {id:'uno',name:'Arduino Uno',mcu:'ATmega328P',flashSize:32768,pageSize:128,sig:[0x1E,0x95,0x0F]},
-  {id:'nano',name:'Arduino Nano (328P)',mcu:'ATmega328P',flashSize:32768,pageSize:128,sig:[0x1E,0x95,0x0F]},
-  {id:'nano168',name:'Arduino Nano (168)',mcu:'ATmega168',flashSize:16384,pageSize:128,sig:[0x1E,0x94,0x06]},
-  {id:'mini',name:'Arduino Mini',mcu:'ATmega328P',flashSize:32768,pageSize:128,sig:[0x1E,0x95,0x0F]},
-  {id:'mega',name:'Arduino Mega 2560',mcu:'ATmega2560',flashSize:262144,pageSize:256,sig:[0x1E,0x98,0x01]},
-  {id:'mega1280',name:'Arduino Mega 1280',mcu:'ATmega1280',flashSize:131072,pageSize:256,sig:[0x1E,0x97,0x03]},
-  {id:'leonardo',name:'Arduino Leonardo',mcu:'ATmega32U4',flashSize:32768,pageSize:128,sig:[0x1E,0x95,0x87]},
-  {id:'micro',name:'Arduino Micro',mcu:'ATmega32U4',flashSize:32768,pageSize:128,sig:[0x1E,0x95,0x87]},
-  {id:'pro8',name:'Arduino Pro/Pro Mini (3.3V/8MHz)',mcu:'ATmega328P',flashSize:32768,pageSize:128,sig:[0x1E,0x95,0x0F]},
-  {id:'ethernet',name:'Arduino Ethernet',mcu:'ATmega328P',flashSize:32768,pageSize:128,sig:[0x1E,0x95,0x0F]},
-  {id:'fio',name:'Arduino Fio',mcu:'ATmega328P',flashSize:32768,pageSize:128,sig:[0x1E,0x95,0x0F]},
-];
+const PAGE_SIZE = 128;
+const MCU_SIG = [0x1E, 0x95, 0x0F];
+const BAUD_RATE = 115200;
 
 const CMD_SYNC       = 0x30;
 const CMD_ENTER      = 0x50;
@@ -132,7 +104,6 @@ const CMD_LEAVE      = 0x51;
 const CMD_LOAD_ADDR  = 0x55;
 const CMD_PROG_PAGE  = 0x64;
 const CMD_READ_SIG   = 0x75;
-const CMD_READ_PAGE  = 0x74;
 const CRC_EOP        = 0x20;
 const RESP_OK        = 0x10;
 const RESP_INSYNC    = 0x14;
@@ -140,11 +111,8 @@ const RESP_INSYNC    = 0x14;
 let port = null;
 let reader = null;
 let writer = null;
-let hexBytes = null;
 let abortController = null;
 
-const boardSel = document.getElementById('boardSelect');
-const baudSel = document.getElementById('baudSelect');
 const hexInput = document.getElementById('hexInput');
 const hexUrl = document.getElementById('hexUrl');
 const fileName = document.getElementById('fileName');
@@ -153,13 +121,6 @@ const programBtn = document.getElementById('programBtn');
 const progressBar = document.getElementById('progressBar');
 const statusEl = document.getElementById('status');
 const logBox = document.getElementById('logBox');
-
-BOARD_CONFIGS.forEach(cfg=>{
-  const opt=document.createElement('option');
-  opt.value=cfg.id;
-  opt.textContent=`${cfg.name} (${cfg.mcu})`;
-  boardSel.appendChild(opt);
-});
 
 function log(msg,type='info'){
   const div=document.createElement('div');
@@ -213,18 +174,10 @@ latestBtn.addEventListener('click',async()=>{
   }
 });
 
-boardSel.addEventListener('change',()=>{
-  const cfg=BOARD_CONFIGS.find(b=>b.id===boardSel.value);
-  if(cfg){
-    baudSel.value=cfg.id==='nano'||cfg.id==='nano168'?'57600':'115200';
-  }
-});
-boardSel.dispatchEvent(new Event('change'));
-
 async function openSerial(){
   try{
     port=await navigator.serial.requestPort();
-    await port.open({baudRate:parseInt(baudSel.value)});
+    await port.open({baudRate:BAUD_RATE});
     const info=port.getInfo();
     log(`Connected: ${info.usbVendorId?'USB '+info.usbVendorId.toString(16):'serial port'}`);
     writer=port.writable.getWriter();
@@ -384,9 +337,8 @@ async function doProgram(){
   setStatus('','');
 
   try{
-    const cfg=BOARD_CONFIGS.find(b=>b.id===boardSel.value);
-    const pageSize=cfg.pageSize;
-    const baud=parseInt(baudSel.value);
+    const pageSize=PAGE_SIZE;
+    const baud=BAUD_RATE;
 
     setStatus('Syncing with bootloader...','info');
     log(`Sync at ${baud} baud...`);
@@ -394,10 +346,6 @@ async function doProgram(){
     await new Promise(r=>setTimeout(r,200));
     if(port) await port.setSignals({dataTerminalReady:true});
     await new Promise(r=>setTimeout(r,600));
-
-    if(port&&port.writable&&port.readable){
-      // already connected, keep using same port
-    }
 
     const synced=await syncBootloader(6);
     if(!synced){
@@ -412,8 +360,8 @@ async function doProgram(){
 
     const sig=await readSignature();
     log(`Signature: ${sig.map(b=>'0x'+b.toString(16).toUpperCase()).join(' ')}`);
-    if(sig[0]!==cfg.sig[0]||sig[1]!==cfg.sig[1]||sig[2]!==cfg.sig[2]){
-      log(`Warning: expected signature ${cfg.sig.map(b=>'0x'+b.toString(16).toUpperCase()).join(' ')}`,'warn');
+    if(sig[0]!==MCU_SIG[0]||sig[1]!==MCU_SIG[1]||sig[2]!==MCU_SIG[2]){
+      log(`Warning: expected signature ${MCU_SIG.map(b=>'0x'+b.toString(16).toUpperCase()).join(' ')}`,'warn');
     }
 
     const hexText=await loadHex();
