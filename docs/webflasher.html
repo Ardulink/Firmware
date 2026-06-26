@@ -22,15 +22,10 @@ select:focus,.url-input:focus{border-color:#f0c040}
 .file-input{display:none}
 .file-name{color:#888;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px}
 .or-divider{color:#555;font-size:.82rem;margin:.5rem 0;text-align:center}
-.btn-row{display:flex;gap:.75rem;flex-wrap:wrap}
 .btn{padding:.6rem 1.4rem;border:none;border-radius:6px;font-size:.92rem;font-weight:600;cursor:pointer;transition:opacity .2s}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .btn-primary{background:#f0c040;color:#1a1a1a}
 .btn-primary:hover:not(:disabled){background:#e0b030}
-.btn-secondary{background:#333;color:#ccc}
-.btn-secondary:hover:not(:disabled){background:#444}
-.btn-danger{background:#c0392b;color:#fff}
-.btn-danger:hover:not(:disabled){background:#a93226}
 .btn-ghost{background:none;border:1px solid #444;color:#aaa;font-size:.82rem;padding:.35rem .75rem;cursor:pointer;border-radius:5px;transition:border-color .2s,color .2s}
 .btn-ghost:hover{border-color:#f0c040;color:#f0c040}
 progress{width:100%;height:8px;border-radius:4px;overflow:hidden;margin-top:.75rem}
@@ -73,11 +68,8 @@ progress::-moz-progress-bar{background:#f0c040;border-radius:4px}
 </div>
 
 <div class="card" id="stepProgram">
-<h2>2. Connect &amp; Program</h2>
-<div class="btn-row">
-<button class="btn btn-secondary" id="connectBtn">Connect</button>
-<button class="btn btn-primary" id="programBtn" disabled>Program</button>
-</div>
+<h2>2. Program</h2>
+<button class="btn btn-primary" id="programBtn" style="width:100%;padding:.8rem 1.4rem;font-size:1.05rem">Program</button>
 <progress id="progressBar" value="0" max="100"></progress>
 <div class="status" id="status"></div>
 </div>
@@ -89,7 +81,7 @@ progress::-moz-progress-bar{background:#f0c040;border-radius:4px}
 
 <p class="note">
 <strong>Requires Chromium-based browser</strong> (Chrome, Edge, Opera) with HTTPS or localhost.<br>
-After clicking <strong>Connect</strong>, select your Arduino's serial port from the browser dialog.
+When you click <strong>Program</strong>, your browser will ask you to select the Arduino's serial port.
 </p>
 </div>
 
@@ -116,7 +108,6 @@ let abortController = null;
 const hexInput = document.getElementById('hexInput');
 const hexUrl = document.getElementById('hexUrl');
 const fileName = document.getElementById('fileName');
-const connectBtn = document.getElementById('connectBtn');
 const programBtn = document.getElementById('programBtn');
 const progressBar = document.getElementById('progressBar');
 const statusEl = document.getElementById('status');
@@ -173,31 +164,6 @@ latestBtn.addEventListener('click',async()=>{
     latestBtn.textContent='↻ Latest';
   }
 });
-
-async function openSerial(){
-  try{
-    port=await navigator.serial.requestPort();
-    await port.open({baudRate:BAUD_RATE});
-    const info=port.getInfo();
-    log(`Connected: ${info.usbVendorId?'USB '+info.usbVendorId.toString(16):'serial port'}`);
-    writer=port.writable.getWriter();
-    reader=port.readable.getReader();
-    return true;
-  }catch(e){
-    if(e.name!=='NotFoundError'){
-      log(`Connection failed: ${e.message}`,'error');
-      setStatus('Connection failed','error');
-    }
-    return false;
-  }
-}
-
-function closeSerial(){
-  try{writer?.releaseLock();}catch(e){}
-  try{reader?.cancel();reader?.releaseLock();}catch(e){}
-  try{port?.close();}catch(e){}
-  port=null;writer=null;reader=null;
-}
 
 async function serialWrite(data){
   if(!writer) throw new Error('Not connected');
@@ -332,11 +298,18 @@ async function doProgram(){
   if(abortController) abortController.abort();
   abortController=new AbortController();
   programBtn.disabled=true;
-  connectBtn.disabled=true;
   setProgress(0);
   setStatus('','');
 
   try{
+    if(!port){
+      port=await navigator.serial.requestPort();
+      await port.open({baudRate:BAUD_RATE});
+      writer=port.writable.getWriter();
+      reader=port.readable.getReader();
+      log('Connected');
+    }
+
     const pageSize=PAGE_SIZE;
     const baud=BAUD_RATE;
 
@@ -391,31 +364,9 @@ async function doProgram(){
     }
   }finally{
     programBtn.disabled=false;
-    connectBtn.disabled=false;
     abortController=null;
   }
 }
-
-connectBtn.addEventListener('click',async()=>{
-  if(port){
-    closeSerial();
-    connectBtn.textContent='Connect';
-    setStatus('Disconnected','');
-    log('Disconnected');
-    programBtn.disabled=true;
-    return;
-  }
-  try{
-    const ok=await openSerial();
-    if(ok){
-      connectBtn.textContent='Disconnect';
-      setStatus('Connected. Click Program to upload.','info');
-      programBtn.disabled=false;
-    }
-  }catch(e){
-    log(`Error: ${e.message}`,'error');
-  }
-});
 
 programBtn.addEventListener('click',doProgram);
 </script>

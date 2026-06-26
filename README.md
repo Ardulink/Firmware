@@ -25,8 +25,7 @@ You can also flash the firmware directly from your browser using the [**WebSeria
 
 1. Open the [WebSerial Flasher](https://ardulink.github.io/Firmware/webflasher.html)
 2. Click **↻ Latest** to fetch the latest release's HEX file automatically, or paste a direct URL
-3. Click **Connect** and choose your Arduino's serial port from the browser dialog
-4. Click **Program** to start uploading
+3. Click **Program** and select your Arduino's serial port when prompted
 
 > **Note:** WebSerial requires a **Chromium-based browser** (Chrome, Edge, Opera) and works over **HTTPS or localhost**.
 
