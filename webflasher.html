@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ardulink-2 Web Firmware Flasher</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#121218;color:#e0e0e0;line-height:1.6;min-height:100vh}
+.container{max-width:720px;margin:0 auto;padding:2rem 1.5rem}
+header{text-align:center;margin-bottom:2rem}
+header h1{font-size:1.6rem;color:#f0c040;margin-bottom:.25rem}
+header p{color:#888;font-size:.95rem}
+.card{background:#1c1c24;border:1px solid #2a2a36;border-radius:10px;padding:1.25rem;margin-bottom:1rem}
+.card h2{font-size:1.05rem;color:#ccc;margin-bottom:.75rem;font-weight:600}
+label{font-size:.88rem;color:#aaa;display:block;margin-bottom:.3rem}
+select,.url-input{width:100%;padding:.55rem .65rem;border:1px solid #333;border-radius:6px;background:#252530;color:#e0e0e0;font-size:.92rem;outline:none;transition:border-color .2s}
+select:focus,.url-input:focus{border-color:#f0c040}
+.file-row{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:.5rem}
+.file-label{display:inline-block;padding:.5rem 1rem;background:#2a2a38;border:1px solid #3a3a4a;border-radius:6px;color:#ccc;font-size:.88rem;cursor:pointer;transition:background .2s}
+.file-label:hover{background:#35354a}
+.file-input{display:none}
+.file-name{color:#888;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px}
+.or-divider{color:#555;font-size:.82rem;margin:.5rem 0;text-align:center}
+.btn-row{display:flex;gap:.75rem;flex-wrap:wrap}
+.btn{padding:.6rem 1.4rem;border:none;border-radius:6px;font-size:.92rem;font-weight:600;cursor:pointer;transition:opacity .2s}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:#f0c040;color:#1a1a1a}
+.btn-primary:hover:not(:disabled){background:#e0b030}
+.btn-secondary{background:#333;color:#ccc}
+.btn-secondary:hover:not(:disabled){background:#444}
+.btn-danger{background:#c0392b;color:#fff}
+.btn-danger:hover:not(:disabled){background:#a93226}
+.btn-ghost{background:none;border:1px solid #444;color:#aaa;font-size:.82rem;padding:.35rem .75rem;cursor:pointer;border-radius:5px;transition:border-color .2s,color .2s}
+.btn-ghost:hover{border-color:#f0c040;color:#f0c040}
+progress{width:100%;height:8px;border-radius:4px;overflow:hidden;margin-top:.75rem}
+progress::-webkit-progress-bar{background:#252530;border-radius:4px}
+progress::-webkit-progress-value{background:#f0c040;border-radius:4px}
+progress::-moz-progress-bar{background:#f0c040;border-radius:4px}
+.status{font-size:.88rem;margin-top:.5rem;min-height:1.3em}
+.status.error{color:#e74c3c}
+.status.success{color:#2ecc71}
+.status.info{color:#f0c040}
+.log-box{background:#0d0d12;border:1px solid #1e1e2a;border-radius:6px;padding:.65rem;height:180px;overflow-y:auto;font-family:'SFMono-Regular',Consolas,'Liberation Mono',monospace;font-size:.78rem;line-height:1.5;color:#aaa;margin-top:.5rem}
+.log-box .log-warn{color:#f39c12}
+.log-box .log-error{color:#e74c3c}
+.log-box .log-success{color:#2ecc71}
+.log-box .log-info{color:#5dade2}
+.note{font-size:.82rem;color:#666;margin-top:.75rem;text-align:center}
+.note a{color:#f0c040}
+.baud-row{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-top:.5rem}
+.baud-row label{display:inline;margin:0}
+.baud-row select{width:auto;min-width:100px}
+@media(max-width:500px){header h1{font-size:1.3rem}.container{padding:1rem}.card{padding:1rem}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>Ardulink-2 Firmware Flasher</h1>
+<p>Upload firmware to your Arduino board via WebSerial</p>
+</header>
+
+<div class="card" id="stepBoard">
+<h2>1. Select Board</h2>
+<select id="boardSelect"></select>
+<div class="baud-row">
+<label for="baudSelect">Baud rate:</label>
+<select id="baudSelect">
+<option value="115200">115200</option>
+<option value="57600">57600</option>
+<option value="38400">38400</option>
+<option value="19200">19200</option>
+<option value="9600">9600</option>
+</select>
+</div>
+</div>
+
+<div class="card" id="stepFirmware">
+<h2>2. Select Firmware (HEX)</h2>
+<div class="file-row">
+<label class="file-label" for="hexInput">Choose File</label>
+<input type="file" class="file-input" id="hexInput" accept=".hex,.txt,.ino.hex">
+<span class="file-name" id="fileName">No file selected</span>
+</div>
+<div class="or-divider">— or paste a direct URL —</div>
+<div style="display:flex;gap:.5rem">
+<input type="url" class="url-input" id="hexUrl" placeholder="https://github.com/Ardulink/Firmware/releases/download/.../ArdulinkProtocol.ino.hex" style="flex:1">
+<button class="btn-ghost" id="latestBtn" title="Resolve latest release URL via GitHub API">↻ Latest</button>
+</div>
+</div>
+
+<div class="card" id="stepProgram">
+<h2>3. Connect &amp; Program</h2>
+<div class="btn-row">
+<button class="btn btn-secondary" id="connectBtn">Connect</button>
+<button class="btn btn-primary" id="programBtn" disabled>Program</button>
+</div>
+<progress id="progressBar" value="0" max="100"></progress>
+<div class="status" id="status"></div>
+</div>
+
+<div class="card">
+<h2>Console</h2>
+<div class="log-box" id="logBox"></div>
+</div>
+
+<p class="note">
+<strong>Requires Chromium-based browser</strong> (Chrome, Edge, Opera) with HTTPS or localhost.<br>
+After clicking <strong>Connect</strong>, select your Arduino's serial port from the browser dialog.
+</p>
+</div>
+
+<script>
+const BOARD_CONFIGS = [
+  {id:'uno',name:'Arduino Uno',mcu:'ATmega328P',flashSize:32768,pageSize:128,sig:[0x1E,0x95,0x0F]},
+  {id:'nano',name:'Arduino Nano (328P)',mcu:'ATmega328P',flashSize:32768,pageSize:128,sig:[0x1E,0x95,0x0F]},
+  {id:'nano168',name:'Arduino Nano (168)',mcu:'ATmega168',flashSize:16384,pageSize:128,sig:[0x1E,0x94,0x06]},
+  {id:'mini',name:'Arduino Mini',mcu:'ATmega328P',flashSize:32768,pageSize:128,sig:[0x1E,0x95,0x0F]},
+  {id:'mega',name:'Arduino Mega 2560',mcu:'ATmega2560',flashSize:262144,pageSize:256,sig:[0x1E,0x98,0x01]},
+  {id:'mega1280',name:'Arduino Mega 1280',mcu:'ATmega1280',flashSize:131072,pageSize:256,sig:[0x1E,0x97,0x03]},
+  {id:'leonardo',name:'Arduino Leonardo',mcu:'ATmega32U4',flashSize:32768,pageSize:128,sig:[0x1E,0x95,0x87]},
+  {id:'micro',name:'Arduino Micro',mcu:'ATmega32U4',flashSize:32768,pageSize:128,sig:[0x1E,0x95,0x87]},
+  {id:'pro8',name:'Arduino Pro/Pro Mini (3.3V/8MHz)',mcu:'ATmega328P',flashSize:32768,pageSize:128,sig:[0x1E,0x95,0x0F]},
+  {id:'ethernet',name:'Arduino Ethernet',mcu:'ATmega328P',flashSize:32768,pageSize:128,sig:[0x1E,0x95,0x0F]},
+  {id:'fio',name:'Arduino Fio',mcu:'ATmega328P',flashSize:32768,pageSize:128,sig:[0x1E,0x95,0x0F]},
+];
+
+const CMD_SYNC       = 0x30;
+const CMD_ENTER      = 0x50;
+const CMD_LEAVE      = 0x51;
+const CMD_LOAD_ADDR  = 0x55;
+const CMD_PROG_PAGE  = 0x64;
+const CMD_READ_SIG   = 0x75;
+const CMD_READ_PAGE  = 0x74;
+const CRC_EOP        = 0x20;
+const RESP_OK        = 0x10;
+const RESP_INSYNC    = 0x14;
+
+let port = null;
+let reader = null;
+let writer = null;
+let hexBytes = null;
+let abortController = null;
+
+const boardSel = document.getElementById('boardSelect');
+const baudSel = document.getElementById('baudSelect');
+const hexInput = document.getElementById('hexInput');
+const hexUrl = document.getElementById('hexUrl');
+const fileName = document.getElementById('fileName');
+const connectBtn = document.getElementById('connectBtn');
+const programBtn = document.getElementById('programBtn');
+const progressBar = document.getElementById('progressBar');
+const statusEl = document.getElementById('status');
+const logBox = document.getElementById('logBox');
+
+BOARD_CONFIGS.forEach(cfg=>{
+  const opt=document.createElement('option');
+  opt.value=cfg.id;
+  opt.textContent=`${cfg.name} (${cfg.mcu})`;
+  boardSel.appendChild(opt);
+});
+
+function log(msg,type='info'){
+  const div=document.createElement('div');
+  div.className=`log-${type}`;
+  div.textContent=msg;
+  logBox.appendChild(div);
+  logBox.scrollTop=logBox.scrollHeight;
+}
+
+function setStatus(msg,type='info'){
+  statusEl.textContent=msg;
+  statusEl.className=`status ${type}`;
+}
+
+function setProgress(pct){
+  progressBar.value=Math.min(100,Math.max(0,pct));
+}
+
+hexInput.addEventListener('change',()=>{
+  fileName.textContent=hexInput.files[0]?.name||'No file selected';
+  hexUrl.value='';
+});
+
+hexUrl.addEventListener('input',()=>{
+  if(hexUrl.value){
+    hexInput.value='';
+    fileName.textContent='No file selected';
+  }
+});
+
+const latestBtn=document.getElementById('latestBtn');
+
+latestBtn.addEventListener('click',async()=>{
+  latestBtn.disabled=true;
+  latestBtn.textContent='…Loading';
+  try{
+    const resp=await fetch('https://api.github.com/repos/Ardulink/Firmware/releases/latest');
+    if(!resp.ok) throw new Error(`GitHub API returned HTTP ${resp.status}`);
+    const data=await resp.json();
+    const asset=data.assets.find(a=>a.name.endsWith('.hex'));
+    if(!asset) throw new Error('No .hex asset found in latest release');
+    hexUrl.value=asset.browser_download_url;
+    hexInput.value='';
+    fileName.textContent='No file selected';
+    log(`Latest release: ${data.tag_name} — ${asset.name}`,'success');
+  }catch(e){
+    log(`Failed to fetch latest release: ${e.message}`,'error');
+  }finally{
+    latestBtn.disabled=false;
+    latestBtn.textContent='↻ Latest';
+  }
+});
+
+boardSel.addEventListener('change',()=>{
+  const cfg=BOARD_CONFIGS.find(b=>b.id===boardSel.value);
+  if(cfg){
+    baudSel.value=cfg.id==='nano'||cfg.id==='nano168'?'57600':'115200';
+  }
+});
+boardSel.dispatchEvent(new Event('change'));
+
+async function openSerial(){
+  try{
+    port=await navigator.serial.requestPort();
+    await port.open({baudRate:parseInt(baudSel.value)});
+    const info=port.getInfo();
+    log(`Connected: ${info.usbVendorId?'USB '+info.usbVendorId.toString(16):'serial port'}`);
+    writer=port.writable.getWriter();
+    reader=port.readable.getReader();
+    return true;
+  }catch(e){
+    if(e.name!=='NotFoundError'){
+      log(`Connection failed: ${e.message}`,'error');
+      setStatus('Connection failed','error');
+    }
+    return false;
+  }
+}
+
+function closeSerial(){
+  try{writer?.releaseLock();}catch(e){}
+  try{reader?.cancel();reader?.releaseLock();}catch(e){}
+  try{port?.close();}catch(e){}
+  port=null;writer=null;reader=null;
+}
+
+async function serialWrite(data){
+  if(!writer) throw new Error('Not connected');
+  await writer.write(data);
+}
+
+async function serialRead(len,timeout=2000){
+  if(!reader) throw new Error('Not connected');
+  const buf=[];
+  const deadline=Date.now()+timeout;
+  while(buf.length<len&&Date.now()<deadline){
+    const {value,done}=await Promise.race([
+      reader.read(),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('Timeout')),deadline-Date.now()))
+    ]);
+    if(done) throw new Error('Stream closed');
+    for(const b of value) buf.push(b);
+  }
+  if(buf.length<len) throw new Error(`Expected ${len} bytes, got ${buf.length}`);
+  return buf;
+}
+
+async function stkCmd(cmd,payload=[],respLen=2){
+  const pkt=new Uint8Array([cmd,...payload,CRC_EOP]);
+  await serialWrite(pkt);
+  const resp=await serialRead(respLen);
+  if(resp[0]!==RESP_INSYNC) throw new Error(`Protocol sync error (expected 0x14, got 0x${resp[0].toString(16)})`);
+  if(respLen>1&&resp[respLen-1]!==RESP_OK) throw new Error(`Command 0x${cmd.toString(16)} failed (got 0x${resp[respLen-1].toString(16)})`);
+  return resp;
+}
+
+async function syncBootloader(maxRetries=5){
+  for(let i=0;i<maxRetries;i++){
+    try{
+      await stkCmd(CMD_SYNC);
+      return true;
+    }catch(e){
+      if(i<maxRetries-1) await new Promise(r=>setTimeout(r,300));
+    }
+  }
+  return false;
+}
+
+async function enterProgramming(){
+  await stkCmd(CMD_ENTER);
+}
+
+async function leaveProgramming(){
+  await stkCmd(CMD_LEAVE);
+}
+
+async function loadAddress(wordAddr){
+  const hi=(wordAddr>>8)&0xFF;
+  const lo=wordAddr&0xFF;
+  await stkCmd(CMD_LOAD_ADDR,[hi,lo]);
+}
+
+async function programPage(data){
+  const len=data.length;
+  const hi=(len>>8)&0xFF;
+  const lo=len&0xFF;
+  await stkCmd(CMD_PROG_PAGE,[hi,lo,0x46,...data]);
+}
+
+async function readSignature(){
+  const resp=await stkCmd(CMD_READ_SIG,[],5);
+  return resp.slice(1,4);
+}
+
+function parseHex(text){
+  const records=[];
+  let base=0;
+  const lines=text.split('\n');
+  for(const raw of lines){
+    const line=raw.trim();
+    if(!line||line[0]!==':') continue;
+    const len=parseInt(line.slice(1,3),16);
+    const addr=parseInt(line.slice(3,7),16);
+    const type=parseInt(line.slice(7,9),16);
+    const bytes=[];
+    for(let i=0;i<len;i++) bytes.push(parseInt(line.slice(9+i*2,11+i*2),16));
+    const calcCksum=(len+(addr>>8)+(addr&0xFF)+type+bytes.reduce((s,b)=>s+b,0))&0xFF;
+    const cksum=parseInt(line.slice(line.length-2),16);
+    if((calcCksum+cksum)&0xFF) throw new Error(`Checksum error at line: ${line}`);
+    if(type===0x04) base=((bytes[0]<<8)|bytes[1])<<16;
+    else if(type===0x02) base=((bytes[0]<<8)|bytes[1])<<4;
+    else if(type===0x00) records.push({address:base+addr,bytes});
+    else if(type===0x01) break;
+  }
+  return records;
+}
+
+function buildPages(records,pageSize){
+  const pages=new Map();
+  for(const r of records){
+    for(let i=0;i<r.bytes.length;i++){
+      const addr=r.address+i;
+      const pi=Math.floor(addr/pageSize);
+      const off=addr%pageSize;
+      if(!pages.has(pi)){
+        const page=new Uint8Array(pageSize);
+        page.fill(0xFF);
+        pages.set(pi,page);
+      }
+      pages.get(pi)[off]=r.bytes[i];
+    }
+  }
+  return pages;
+}
+
+async function loadHex(){
+  if(hexInput.files.length>0){
+    const f=hexInput.files[0];
+    const text=await f.text();
+    log(`Loaded ${f.name} (${(text.length/1024).toFixed(1)} KB)`);
+    return text;
+  }
+  const url=hexUrl.value.trim();
+  if(url){
+    setStatus('Downloading HEX file...','info');
+    log(`Downloading ${url}...`);
+    const resp=await fetch(url);
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const text=await resp.text();
+    log(`Downloaded (${(text.length/1024).toFixed(1)} KB)`);
+    return text;
+  }
+  throw new Error('Select a HEX file or paste a URL');
+}
+
+async function doProgram(){
+  if(abortController) abortController.abort();
+  abortController=new AbortController();
+  programBtn.disabled=true;
+  connectBtn.disabled=true;
+  setProgress(0);
+  setStatus('','');
+
+  try{
+    const cfg=BOARD_CONFIGS.find(b=>b.id===boardSel.value);
+    const pageSize=cfg.pageSize;
+    const baud=parseInt(baudSel.value);
+
+    setStatus('Syncing with bootloader...','info');
+    log(`Sync at ${baud} baud...`);
+    if(port) await port.setSignals({dataTerminalReady:false});
+    await new Promise(r=>setTimeout(r,200));
+    if(port) await port.setSignals({dataTerminalReady:true});
+    await new Promise(r=>setTimeout(r,600));
+
+    if(port&&port.writable&&port.readable){
+      // already connected, keep using same port
+    }
+
+    const synced=await syncBootloader(6);
+    if(!synced){
+      setStatus('Sync failed. Try pressing Reset on your board and click Program again.','error');
+      log('Failed to sync with bootloader','error');
+      return;
+    }
+    log('Synced with bootloader');
+
+    await enterProgramming();
+    log('Entered programming mode');
+
+    const sig=await readSignature();
+    log(`Signature: ${sig.map(b=>'0x'+b.toString(16).toUpperCase()).join(' ')}`);
+    if(sig[0]!==cfg.sig[0]||sig[1]!==cfg.sig[1]||sig[2]!==cfg.sig[2]){
+      log(`Warning: expected signature ${cfg.sig.map(b=>'0x'+b.toString(16).toUpperCase()).join(' ')}`,'warn');
+    }
+
+    const hexText=await loadHex();
+    const records=parseHex(hexText);
+    const pages=buildPages(records,pageSize);
+    const sorted=[...pages.entries()].sort(([a],[b])=>a-b);
+    log(`Parsed ${records.length} records into ${sorted.length} page(s)`);
+
+    setStatus(`Programming ${sorted.length} page(s)...`,'info');
+    for(let i=0;i<sorted.length;i++){
+      if(abortController.signal.aborted) throw new Error('Cancelled');
+      const [pi,data]=sorted[i];
+      const wordAddr = pi * pageSize / 2;
+      await loadAddress(wordAddr);
+      await programPage(data);
+      setProgress(Math.round((i+1)/sorted.length*100));
+    }
+
+    await leaveProgramming();
+    setProgress(100);
+    setStatus('Programming complete!','success');
+    log('Firmware uploaded successfully!','success');
+  }catch(e){
+    if(e.message!=='Cancelled'){
+      setStatus(`Error: ${e.message}`,'error');
+      log(`Error: ${e.message}`,'error');
+    }
+  }finally{
+    programBtn.disabled=false;
+    connectBtn.disabled=false;
+    abortController=null;
+  }
+}
+
+connectBtn.addEventListener('click',async()=>{
+  if(port){
+    closeSerial();
+    connectBtn.textContent='Connect';
+    setStatus('Disconnected','');
+    log('Disconnected');
+    programBtn.disabled=true;
+    return;
+  }
+  try{
+    const ok=await openSerial();
+    if(ok){
+      connectBtn.textContent='Disconnect';
+      setStatus('Connected. Click Program to upload.','info');
+      programBtn.disabled=false;
+    }
+  }catch(e){
+    log(`Error: ${e.message}`,'error');
+  }
+});
+
+programBtn.addEventListener('click',doProgram);
+</script>
+</body>
+</html>

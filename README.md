@@ -15,9 +15,21 @@ This repo hosts:
 Ready-to-use precompiled `.hex` files for various Arduino boards (e.g. Uno, Nano, Mega) are available on the [Releases Page](https://github.com/Ardulink/Firmware/releases).  
 
 You can upload these using tools like:
-- [XLoader](http://russemotto.com/xloader/) (Windows)
+- [XLoader](http://rushemotto.com/xloader/) (Windows)
 - [avrdude](https://github.com/avrdudes/avrdude) (macOS/Linux/Windows)
 - [Arduino IDE](https://www.arduino.cc/en/software/) (for flashing manually built sketches)
+
+### 🌐 WebSerial Upload
+
+You can also flash the firmware directly from your browser using the [**WebSerial Flasher**](./webflasher.html) — no software installation needed.
+
+1. Open the [webflasher.html](./webflasher.html) page
+2. Select your Arduino board type
+3. Download the `.hex` file from the [Releases Page](https://github.com/Ardulink/Firmware/releases) and select it (or paste the direct download URL)
+4. Click **Connect** and choose your Arduino's serial port from the browser dialog
+5. Click **Program** to start uploading
+
+> **Note:** WebSerial requires a **Chromium-based browser** (Chrome, Edge, Opera) and works over **HTTPS or localhost**.
 
 ---
 
