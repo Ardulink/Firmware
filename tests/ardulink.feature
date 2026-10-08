@@ -10,45 +10,45 @@ Feature: Ardulink Behavior
 
 
   Scenario: Can switch digital on and off
-    Given the pin D12 is digital monitored
+    Given the pin 12 is digital monitored
 
     When serial message "alp://ppsw/12/1" is sent
-    Then the pin D12 should be high
+    Then the pin 12 should be high
 
     When serial message "alp://ppsw/12/0" is sent
-    Then the pin D12 should be low
+    Then the pin 12 should be low
 
 
   Scenario: Can set values on pin
-    Given the pin D9 is analog monitored
+    Given the pin 9 is analog monitored
 
     When serial message "alp://ppin/9/123" is sent
-    Then the pin D9 should be 123
+    Then the pin 9 should be 123
 
     When serial message "alp://ppin/9/0" is sent
-    Then the pin D9 should be 0
+    Then the pin 9 should be 0
 
 
   Scenario: Tone without rply message
-    Given the pin D9 is analog monitored
+    Given the pin 9 is analog monitored
 
     When serial message "alp://tone/9/123/-1" is sent
-    Then the pin D9 should be 127
+    Then the pin 9 should be 127
 
     When serial message "alp://notn/9" is sent
-    Then the pin D9 should be 0
+    Then the pin 9 should be 0
 
 
   Scenario: Tone with rply message
-    Given the pin D9 is analog monitored
+    Given the pin 9 is analog monitored
 
     When serial message "alp://tone/9/123/-1?id=42" is sent
     And serial response "alp://rply/ok?id=42" was received
-    Then the pin D9 should be 127
+    Then the pin 9 should be 127
 
     When serial message "alp://notn/9?id=43" is sent
     And serial response "alp://rply/ok?id=43" was received
-    Then the pin D9 should be 0
+    Then the pin 9 should be 0
 
 
   Scenario: Custom messages are not supported in default implementation
@@ -93,7 +93,7 @@ Feature: Ardulink Behavior
     Then serial response "alp://rply/ok?id=42" was received
     And serial response "alp://dred/12/0" was received
 
-    When the pin D12 is set to high
+    When the pin 12 is set to high
     And serial response "alp://dred/12/1" was received
 
     When serial message "alp://spld/12?id=43" is sent
@@ -101,7 +101,7 @@ Feature: Ardulink Behavior
 
 
   Scenario: Can read digital pin state initial pin state 1
-    Given the pin D12 is set to high
+    Given the pin 12 is set to high
     When serial message "alp://srld/12?id=42" is sent
     Then serial response "alp://rply/ok?id=42" was received
     And serial response "alp://dred/12/1" was received
@@ -127,7 +127,7 @@ Feature: Ardulink Behavior
 
 
   Scenario: Re-enabling digital monitoring triggers value
-    Given the pin D12 is set to high
+    Given the pin 12 is set to high
 
     When serial message "alp://srld/12?id=20" is sent
     Then serial response "alp://rply/ok?id=20" was received
