@@ -28,12 +28,17 @@ your needs.
 #define UNIQUE_ID_MAGIC_NUMBER_HIGH 76
 #define UNIQUE_ID_MAGIC_NUMBER_LOW 90
 
+// Uncomment to enable the custom message "clearUniqueID", which clears the stored UniqueID from EEPROM.
+// #define CLEAR_UNIQUE_ID
+
 bool handleCustomMessage(String customId, String value) {
-//  if (customId == "clearUniqueID") {
-//     char buffer[UNIQUE_ID_LENGTH + 1] = { 0 };
-//     EEPROM.put(UNIQUE_ID_EEPROM_ADDRESS, buffer);
-//     return true;
-//  }
+#ifdef CLEAR_UNIQUE_ID
+  if (customId == "clearUniqueID") {
+     char buffer[UNIQUE_ID_LENGTH + 1] = { 0 };
+     EEPROM.put(UNIQUE_ID_EEPROM_ADDRESS, buffer);
+     return true;
+  }
+#endif
 
    if (customId != "getUniqueID") {
       return false;
