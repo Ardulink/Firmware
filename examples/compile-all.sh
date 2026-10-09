@@ -1,17 +1,17 @@
 #!/bin/bash
 
 BOARD_TYPE="${BOARD_TYPE:-arduino:avr:uno}"
-ENABLE_UNSAFE_LIB_INSTALL="${ENABLE_UNSAFE_LIB_INSTALL:-true}"
+ENABLE_UNSAFE_INSTALL="${ENABLE_UNSAFE_INSTALL:-true}"
 
-BUILD_DIR=$(mktemp -d)
-echo "Using temporary build directory: $BUILD_DIR"
+build_dir=$(mktemp -d)
+echo "Using temporary build directory: $build_dir"
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-for SKETCH in "$SCRIPT_DIR"/custom/*/; do
-  SKETCH_NAME=$(basename "$SKETCH")
-  echo "Compiling: $SKETCH_NAME"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+for sketch_dir in "$script_dir"/custom/*/; do
+  sketch_name=$(basename "$sketch_dir")
+  echo "Compiling: $sketch_name"
 
-  libraries_file="$SKETCH/libraries.txt"
+  libraries_file="$sketch_dir/libraries.txt"
   if [[ -f "$libraries_file" ]]; then
       while IFS= read -r line; do
           line="$(echo "$line" | xargs)"
@@ -23,7 +23,7 @@ for SKETCH in "$SCRIPT_DIR"/custom/*/; do
           elif [[ "$line" == */* ]] || [[ "$line" == *.zip ]]; then
               [[ -n "${ENABLE_UNSAFE_INSTALL:-}" ]] && arduino-cli config set library.enable_unsafe_install "${ENABLE_UNSAFE_INSTALL}"
               (
-                  cd "$SKETCH" || { echo "Cannot cd to $SKETCH" >&2; exit 1; }
+                  cd "$SKETCH" || { echo "Cannot cd to $sketch_dir" >&2; exit 1; }
                   arduino-cli lib install --zip-path "$line" || echo "Error installing ZIP library: $line" >&2
               )
           else
@@ -34,6 +34,6 @@ for SKETCH in "$SCRIPT_DIR"/custom/*/; do
   fi
 
 
-  arduino-cli compile --fqbn "$BOARD_TYPE" "${SKETCH}" --output-dir "$BUILD_DIR/$SKETCH_NAME"
+  arduino-cli compile --fqbn "$BOARD_TYPE" "${sketch_dir}" --output-dir "$build_dir/$sketch_name"
 done
 
