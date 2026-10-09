@@ -24,21 +24,24 @@ class WebSocketListener:
         Start the WebSocket connection and listener in a background thread with retries.
         """
         self.running = True
+        last_error = None
         for attempt in range(1, self.max_retries + 1):
             try:
-                # sleep before first try since the websocket server start needs some time
-                if attempt < self.max_retries:
-                    time.sleep(self.retry_interval)
-                else:
-                    print("Max retries reached. Failed to establish WebSocket connection.")
-                    self.running = False
-                    return
                 print(f"Attempting to connect to WebSocket ({attempt}/{self.max_retries})...")
                 self.ws = websocket.create_connection(self.ws_url, timeout=5)
                 print(f"WebSocket connection established to {self.ws_url}")
                 break
             except Exception as e:
+                last_error = e
                 print(f"Connection attempt {attempt} failed: {e}")
+                if attempt < self.max_retries:
+                    time.sleep(self.retry_interval)
+        else:
+            self.running = False
+            raise ConnectionError(
+                f"Failed to establish WebSocket connection to {self.ws_url} "
+                f"after {self.max_retries} attempts: {last_error}"
+            )
 
         self.thread = threading.Thread(target=self._listen, daemon=True)
         self.thread.start()

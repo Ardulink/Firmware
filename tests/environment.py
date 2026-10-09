@@ -67,7 +67,7 @@ def before_scenario(context, scenario):
         "FILENAME": sketch_file,
         "DEVICEUSER": str(os.getuid()),
         "PAUSE_ON_START": True,
-        "ENABLE_UNSAFE_LIB_INSTALL": True
+        "ENABLE_UNSAFE_INSTALL": True
     }
 
     if additional_urls:
