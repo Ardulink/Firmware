@@ -1,6 +1,9 @@
 name: Compile Arduino Sketch
 
 on:
+  schedule:
+  # each tenth day of month
+  - cron: "0 0 10 * *"
   push:
   pull_request:
   workflow_dispatch:
