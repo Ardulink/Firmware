@@ -72,6 +72,17 @@ def wait_for_serial_message(context, expected_response, timeout=30):
     raise AssertionError(f"Expected serial response '{expected_display}' ({match_type}) not received within {timeout} seconds.")
 
 
+@then('no serial response is received within {seconds:d} seconds')
+def no_serial_response_within(context, seconds):
+    previous_timeout = context.serial_conn.timeout
+    context.serial_conn.timeout = seconds
+    try:
+        response = context.serial_conn.readline().decode('ascii', errors='ignore').strip()
+    finally:
+        context.serial_conn.timeout = previous_timeout
+    assert response == "", f"Unexpected serial response: {response}"
+
+
 @given('arduino is in steady state')
 def arduino_is_in_steady_state(context):
     wait_for_serial_message(context, re.compile(r"^alp://info/"))

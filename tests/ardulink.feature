@@ -88,6 +88,27 @@ Feature: Ardulink Behavior
     Then serial response "alp://rply/ok?id=43" was received
 
 
+  Scenario: Can query analog pin without listening
+    Given the pin A5 is set to 987
+    When serial message "alp://qrya/5?id=42" is sent
+    Then serial response "alp://rply/ok?id=42&value=987" was received
+
+
+  Scenario: Can query digital pin without listening
+    Given the pin 12 is set to high
+    When serial message "alp://qryd/12?id=43" is sent
+    Then serial response "alp://rply/ok?id=43&value=1" was received
+
+
+  Scenario: Querying does not start listening
+    Given the pin A5 is set to 987
+    When serial message "alp://qrya/5?id=44" is sent
+    Then serial response "alp://rply/ok?id=44&value=987" was received
+
+    When the pin A5 is set to 123
+    Then no serial response is received within 1 seconds
+
+
   Scenario: Can read digital pin state initial pin state 0
     When serial message "alp://srld/12?id=42" is sent
     Then serial response "alp://rply/ok?id=42" was received

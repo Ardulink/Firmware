@@ -97,16 +97,31 @@ Additional key/value pairs may be added in the future. This message is sent once
 - **Parameters**:
   - `id`: *(Optional)* Unique message identifier. If provided, it will be included in the response.
 
+### 12. **Query Analog Pin (qrya)**
+- **Command**: `alp://qrya/<pin>?id=<id>` *(Optional: `?id=<id>`)*
+- **Description**: Reads an analog pin once without starting a subscription. The pin is configured as `INPUT` for the read. The reply contains the current value in the `value` parameter.
+- **Parameters**:
+  - `pin`: Analog pin number (integer, e.g. `5` for A5).
+  - `id`: *(Optional)* Unique message identifier. If provided, it will be included in the response.
+
+### 13. **Query Digital Pin (qryd)**
+- **Command**: `alp://qryd/<pin>?id=<id>` *(Optional: `?id=<id>`)*
+- **Description**: Reads a digital pin once without starting a subscription. The pin is configured as `INPUT` for the read. The reply contains the current value (`0` or `1`) in the `value` parameter.
+- **Parameters**:
+  - `pin`: Pin number (integer).
+  - `id`: *(Optional)* Unique message identifier. If provided, it will be included in the response.
+
 ---
 
 ## Response Format
 
 ### 1. **Reply (rply)**
-- **Command**: `alp://rply/<status>?id=<id>`  
-- **Description**: The Arduino sends a response back indicating the success or failure of the operation. The response includes the same `id` from the original command (if it was provided). If no `id` was provided in the the original command there will be no reply. 
+- **Command**: `alp://rply/<status>?id=<id>[&<key>=<value>...]`
+- **Description**: The Arduino sends a response back indicating the success or failure of the operation. The response includes the same `id` from the original command (if it was provided). If no `id` was provided in the the original command there will be no reply. Commands may append additional key/value parameters after the `id`, separated by `&`.
 - **Parameters**:
   - `status`: "ok" or "ko" indicating whether the command was successful or not.
   - `id`: The unique message identifier that was included in the original command. 
+  - `<key>=<value>`: *(Optional)* Additional response data, e.g. `value=987` for `qrya`/`qryd`.
 
 ### 2. **Pin Reading**
 - **Command**: `alp://<type>/<pin>/<value>`
@@ -143,6 +158,14 @@ Additional key/value pairs may be added in the future. This message is sent once
    
 2. **Arduino Response**: (No response)
    - **Description**: Since the command did not include an `id`, no response is sent from the Arduino.
+
+### Case 3: Query a pin value
+
+1. **Command**: `alp://qrya/5?id=4711`
+   - **Description**: Read analog pin A5 once, without starting a subscription.
+
+2. **Arduino Response**: `alp://rply/ok?id=4711&value=123`
+   - **Description**: The current value of A5 is `123`.
 
 ---
 
