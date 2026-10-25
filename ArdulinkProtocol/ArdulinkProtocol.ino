@@ -141,6 +141,18 @@ bool handleSpla(const char* cParams, size_t length) {
   return setAnalogListeningState(pin, false);
 }
 
+bool handleQrya(const char* cParams, size_t length) {
+  int pin = atoi(cParams);
+  pinMode(DIGITAL_PIN_LISTENING_NUM + pin, INPUT);
+  return rplyAppend("value=") && rplyAppendInt(highPrecisionAnalogRead(pin));
+}
+
+bool handleQryd(const char* cParams, size_t length) {
+  int pin = atoi(cParams);
+  pinMode(pin, INPUT);
+  return rplyAppend("value=") && rplyAppendInt(digitalRead(pin));
+}
+
 bool handleCust(const char* cParams, size_t length) {
   String params = String(cParams);
   if (length != UNLIMITED_LENGTH) params = params.substring(0, length);
@@ -164,6 +176,8 @@ const CommandHandler commandHandlers[] = {
     {"spld", handleSpld},
     {"srla", handleSrla},
     {"spla", handleSpla},
+    {"qrya", handleQrya},
+    {"qryd", handleQryd},
     {"cust", handleCust}
 };
 
@@ -196,6 +210,8 @@ void loop() {
 
 void handleInput(const char* input) {
   if (strncmp(input, "alp://", 6) != 0) return;
+
+  rplyClear();
 
   const char* commandAndParams = input + 6;
   const char* idPosition = strstr(commandAndParams, "?id=");
